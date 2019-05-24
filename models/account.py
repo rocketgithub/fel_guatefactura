@@ -140,7 +140,7 @@ class AccountInvoice(models.Model):
                 DocAsociados = etree.SubElement(Detalles, "DocAsociados")
                 DASerie = etree.SubElement(DocAsociados, "DASerie")
                 if factura.journal_id.tipo_documento_fel > 1:
-                    DASerie.text = "-".join(factura.numero_viejo.split("-")[0])
+                    DASerie.text = factura.numero_viejo.split("-")[0]
                 DAPreimpreso = etree.SubElement(DocAsociados, "DAPreimpreso")
                 if factura.journal_id.tipo_documento_fel > 1:
                     DAPreimpreso.text = factura.numero_viejo.split("-")[1]
