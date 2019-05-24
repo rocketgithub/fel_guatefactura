@@ -174,7 +174,7 @@ class AccountInvoice(models.Model):
                 else:
                     raise UserError(resultadoXML.xpath("//Resultado")[0].text)
 
-        # return super(AccountInvoice,self).invoice_validate()
+        return super(AccountInvoice,self).invoice_validate()
 
 class AccountJournal(models.Model):
     _inherit = "account.journal"
