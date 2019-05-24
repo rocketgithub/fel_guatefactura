@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+        <record model="ir.ui.view" id="invoice_form_fel_guatefactura">
+            <field name="name">account.invoice.form.fel_guatefactura</field>
+            <field name="model">account.invoice</field>
+            <field name="inherit_id" ref="account.invoice_form"/>
+            <field name="arch" type="xml">
+                <data>
+                    <field name="comment" position="after">
+                        <group>
+                            <field name="firma_fel"/>
+                            <field name="serie_fel"/>
+                            <field name="numero_fel"/>
+                        </group>
+                        <group>
+                            <field name="nombre_cliente_fel"/>
+                            <field name="direccion_cliente_fel"/>
+                        </group>
+                    </field>
+                </data>
+            </field>
+        </record>
+
+        <record model="ir.ui.view" id="journal_form_fel_guatefactura">
+            <field name="name">account.journal.form.fel_guatefactura</field>
+            <field name="model">account.journal</field>
+            <field name="inherit_id" ref="account.view_account_journal_form"/>
+            <field name="arch" type="xml">
+                <data>
+                    <field name="group_invoice_lines" position="after">
+                        <field name="usuario_fel"/>
+                        <field name="clave_fel"/>
+                        <field name="nit_fel"/>
+                        <field name="establecimiento_fel"/>
+                        <field name="tipo_documento_fel"/>
+                        <field name="id_maquina_fel"/>
+                        <!-- <field name="serie_fel"/> -->
+                        <!-- <field name="numero_resolucion_fel"/>
+                        <field name="fecha_resolucion_fel"/>
+                        <field name="rango_inicial_fel"/>
+                        <field name="rango_final_fel"/>
+                        <field name="dispositivo_fel"/>
+                        <field name="nombre_documento_fel"/> -->
+                    </field>
+                </data>
+            </field>
+        </record>
+
+    </data>
+</openerp>
