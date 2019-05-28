@@ -22,7 +22,6 @@ class AccountInvoice(models.Model):
     # pdf_fel = fields.Binary('PDF FEL', copy=False)
     serie_fel = fields.Char('Serie FEL', copy=False)
     numero_fel = fields.Char('Numero FEL', copy=False)
-    nombre_cliente_fel = fields.Char('Numero FEL', copy=False)
     nombre_cliente_fel = fields.Char('Nombre Cliente FEL', copy=False)
     direccion_cliente_fel = fields.Char('Nombre Cliente FEL', copy=False)
     telefono_cliente_fel = fields.Char('Nombre Cliente FEL', copy=False)
