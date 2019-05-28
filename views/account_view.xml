@@ -10,13 +10,16 @@
                 <data>
                     <field name="comment" position="after">
                         <group>
-                            <field name="firma_fel"/>
-                            <field name="serie_fel"/>
-                            <field name="numero_fel"/>
-                        </group>
-                        <group>
-                            <field name="nombre_cliente_fel"/>
-                            <field name="direccion_cliente_fel"/>
+                            <group>
+                                <field name="firma_fel"/>
+                                <field name="serie_fel"/>
+                                <field name="numero_fel"/>
+                            </group>
+                            <group>
+                                <field name="nombre_cliente_fel"/>
+                                <field name="direccion_cliente_fel"/>
+                                <field name="factura_original_id"/>
+                            </group>
                         </group>
                     </field>
                 </data>
