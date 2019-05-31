@@ -23,7 +23,7 @@ class AccountInvoice(models.Model):
     serie_fel = fields.Char('Serie FEL', copy=False)
     numero_fel = fields.Char('Numero FEL', copy=False)
     nombre_cliente_fel = fields.Char('Nombre Cliente FEL', copy=False)
-    direccion_cliente_fel = fields.Char('Nombre Cliente FEL', copy=False)
+    direccion_cliente_fel = fields.Char('Dirección Cliente FEL', copy=False)
     telefono_cliente_fel = fields.Char('Nombre Cliente FEL', copy=False)
     factura_original_id = fields.Many2one('account.invoice', string="Factura original FEL")
 
