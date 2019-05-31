@@ -154,7 +154,7 @@ class AccountInvoice(models.Model):
                 session.headers.update({'Authorization': 'Basic dXNyX2d1YXRlZmFjOnVzcmd1YXRlZmFj'})
                 transport = Transport(session=session)
                 # wsdl = 'https://pdte.guatefacturas.com/webservices63/feltest/Guatefac?WSDL'
-                wsdl = 'https://pdte.guatefacturas.com/webservices63/fel/Guatefac'
+                wsdl = 'https://pdte.guatefacturas.com/webservices63/fel/Guatefac?WSDL'
                 client = zeep.Client(wsdl=wsdl, transport=transport)
 
                 resultado = client.service.generaDocumento(factura.journal_id.usuario_fel, factura.journal_id.clave_fel, factura.journal_id.nit_fel, factura.journal_id.establecimiento_fel, factura.journal_id.tipo_documento_fel, factura.journal_id.id_maquina_fel, "R", xmls)
