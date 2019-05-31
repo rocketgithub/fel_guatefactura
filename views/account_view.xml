@@ -39,13 +39,6 @@
                         <field name="establecimiento_fel"/>
                         <field name="tipo_documento_fel"/>
                         <field name="id_maquina_fel"/>
-                        <!-- <field name="serie_fel"/> -->
-                        <!-- <field name="numero_resolucion_fel"/>
-                        <field name="fecha_resolucion_fel"/>
-                        <field name="rango_inicial_fel"/>
-                        <field name="rango_final_fel"/>
-                        <field name="dispositivo_fel"/>
-                        <field name="nombre_documento_fel"/> -->
                     </field>
                 </data>
             </field>

@@ -148,13 +148,13 @@ class AccountInvoice(models.Model):
                 logging.warn(xmls)
 
                 session = Session()
-                # session.verify = False
-                # session.auth = HTTPBasicAuth('usr_guatefac', 'usrguatefac')
-                # session.http_auth = HTTPBasicAuth('usr_guatefac', 'usrguatefac')
-                # session.headers.update({'Authorization': 'Basic dXNyX2d1YXRlZmFjOnVzcmd1YXRlZmFj'})
+                session.verify = False
+                session.auth = HTTPBasicAuth('usr_guatefac', 'usrguatefac')
+                session.http_auth = HTTPBasicAuth('usr_guatefac', 'usrguatefac')
+                session.headers.update({'Authorization': 'Basic dXNyX2d1YXRlZmFjOnVzcmd1YXRlZmFj'})
                 transport = Transport(session=session)
-                # wsdl = 'https://usr_guatefac:usrguatefac@pdte.guatefacturas.com/webservices63/feltest/Guatefac?WSDL'
-                wsdl = 'https://pdte.guatefacturas.com/webservices63/feltest/Guatefac?WSDL'
+                # wsdl = 'https://pdte.guatefacturas.com/webservices63/feltest/Guatefac?WSDL'
+                wsdl = 'https://pdte.guatefacturas.com/webservices63/fel/Guatefac'
                 client = zeep.Client(wsdl=wsdl, transport=transport)
 
                 resultado = client.service.generaDocumento(factura.journal_id.usuario_fel, factura.journal_id.clave_fel, factura.journal_id.nit_fel, factura.journal_id.establecimiento_fel, factura.journal_id.tipo_documento_fel, factura.journal_id.id_maquina_fel, "R", xmls)
