@@ -110,7 +110,7 @@ class AccountInvoice(models.Model):
                         Cantidad = etree.SubElement(Productos, "Cantidad")
                         Cantidad.text = str(linea.quantity)
                         Precio = etree.SubElement(Productos, "Precio")
-                        Precio.text = "%.2f" % precio_unitario
+                        Precio.text = "%.6f" % precio_unitario
                         PorcDesc = etree.SubElement(Productos, "PorcDesc")
                         PorcDesc.text = "0"
                         ImpBruto = etree.SubElement(Productos, "ImpBruto")
@@ -171,7 +171,7 @@ class AccountInvoice(models.Model):
                     factura.nombre_cliente_fel = resultadoXML.xpath("//Nombre")[0].text
                     factura.direccion_cliente_fel = resultadoXML.xpath("//Direccion")[0].text
                 else:
-                    raise UserError(resultadoXML.xpath("//Resultado")[0].text)
+                    raise UserError(etree.tostring(resultadoXML))
 
         return super(AccountInvoice,self).invoice_validate()
 
