@@ -19,6 +19,7 @@
                                 <field name="nombre_cliente_fel"/>
                                 <field name="direccion_cliente_fel"/>
                                 <field name="factura_original_id"/>
+                                <field name="motivo_fel" attrs="{'invisible': [('factura_original_id','=',False)]}"/>
                             </group>
                         </group>
                     </field>
