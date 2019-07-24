@@ -6,7 +6,7 @@ from odoo.exceptions import UserError
 
 #import odoo.addons.l10n_gt_extra.a_letras
 
-from datetime import datetime
+import datetime
 from lxml import etree
 import base64
 import logging
@@ -153,7 +153,7 @@ class AccountInvoice(models.Model):
                 session.http_auth = HTTPBasicAuth('usr_guatefac', 'usrguatefac')
                 session.headers.update({'Authorization': 'Basic dXNyX2d1YXRlZmFjOnVzcmd1YXRlZmFj'})
                 transport = Transport(session=session)
-                # wsdl = 'https://pdte.guatefacturas.com/webservices63/feltest/Guatefac?WSDL'
+                #wsdl = 'https://pdte.guatefacturas.com/webservices63/feltest/Guatefac?WSDL'
                 wsdl = 'https://pdte.guatefacturas.com/webservices63/fel/Guatefac?WSDL'
                 client = zeep.Client(wsdl=wsdl, transport=transport)
 
@@ -174,6 +174,40 @@ class AccountInvoice(models.Model):
                     raise UserError(etree.tostring(resultadoXML))
 
         return super(AccountInvoice,self).invoice_validate()
+
+    @api.multi
+    def action_cancel(self):
+        result = super(AccountInvoice,self).action_cancel()
+        if result:
+            for factura in self:
+                if factura.journal_id.usuario_fel and factura.firma_fel:
+                    session = Session()
+                    session.verify = False
+                    session.auth = HTTPBasicAuth('usr_guatefac', 'usrguatefac')
+                    session.http_auth = HTTPBasicAuth('usr_guatefac', 'usrguatefac')
+                    session.headers.update({'Authorization': 'Basic dXNyX2d1YXRlZmFjOnVzcmd1YXRlZmFj'})
+                    transport = Transport(session=session)
+                    #wsdl = 'https://pdte.guatefacturas.com/webservices63/feltest/Guatefac?WSDL'
+                    wsdl = 'https://pdte.guatefacturas.com/webservices63/fel/Guatefac?WSDL'
+                    client = zeep.Client(wsdl=wsdl, transport=transport)
+
+                    resultado = client.service.anulaDocumento(factura.journal_id.usuario_fel, factura.journal_id.clave_fel, factura.journal_id.nit_fel, factura.serie_fel, factura.numero_fel, factura.partner_id.vat, datetime.date.today().strftime("%Y%m%d"), factura.motivo_fel)
+                    resultado = resultado.replace("&", "&amp;")
+                    logging.warn(resultado)
+                    resultadoXML = etree.XML(resultado)
+
+                    if len(resultadoXML.xpath("//ESTADO")) == 0 or resultadoXML.xpath("//ESTADO")[0].text != "ANULADO":
+                        raise UserError(etree.tostring(resultadoXML))
+
+        return result
+
+    @api.multi
+    def action_invoice_draft(self):
+        for factura in self:
+            if factura.firma_fel:
+                raise UserError("La factura ya fue enviada a Guatefacturas, por lo que ya no puede ser modificada")
+            else:
+                return super(AccountInvoice,self).action_invoice_draft()
 
 class AccountJournal(models.Model):
     _inherit = "account.journal"
