@@ -64,6 +64,21 @@ class AccountInvoice(models.Model):
                 Referencia = etree.SubElement(InfoDoc, "SerieAdmin")
                 Referencia = etree.SubElement(InfoDoc, "NumeroAdmin")
                 Referencia = etree.SubElement(InfoDoc, "Reversion")
+                
+                total_exento = 0
+                total_neto = 0
+                for linea in factura.invoice_line_ids:
+                    precio_unitario = linea.price_unit * (100-linea.discount) / 100
+                    precio_unitario_base = linea.price_subtotal / linea.quantity
+
+                    total_linea = precio_unitario * linea.quantity
+                    total_linea_base = precio_unitario_base * linea.quantity
+
+                    total_impuestos = total_linea - total_linea_base
+                    if total_impuestos > 0:
+                        total_neto = total_linea_base
+                    else:
+                        total_exento = total_linea
 
                 Totales = etree.SubElement(Encabezado, "Totales")
 
@@ -72,11 +87,11 @@ class AccountInvoice(models.Model):
                 Descuento = etree.SubElement(Totales, "Descuento")
                 Descuento.text = "0"
                 Exento = etree.SubElement(Totales, "Exento")
-                Exento.text = "0"
+                Exento.text = "%.2f" % total_exento
                 Otros = etree.SubElement(Totales, "Otros")
                 Otros.text = "0"
                 Neto = etree.SubElement(Totales, "Neto")
-                Neto.text = "%.2f" % factura.amount_untaxed
+                Neto.text = "%.2f" % total_neto
                 Isr = etree.SubElement(Totales, "Isr")
                 Isr.text = "0"
                 Iva = etree.SubElement(Totales, "Iva")
@@ -118,11 +133,11 @@ class AccountInvoice(models.Model):
                         ImpDescuento = etree.SubElement(Productos, "ImpDescuento")
                         ImpDescuento.text = "0"
                         ImpExento = etree.SubElement(Productos, "ImpExento")
-                        ImpExento.text = "0"
+                        ImpExento.text = "%.2f" % total_linea_base if total_impuestos == 0 else "0"
                         ImpOtros = etree.SubElement(Productos, "ImpOtros")
                         ImpOtros.text = "0"
                         ImpNeto = etree.SubElement(Productos, "ImpNeto")
-                        ImpNeto.text = "%.2f" % total_linea_base
+                        ImpNeto.text = "%.2f" % total_linea_base if total_impuestos > 0 else "0"
                         ImpIsr = etree.SubElement(Productos, "ImpIsr")
                         ImpIsr.text = "0"
                         ImpIva = etree.SubElement(Productos, "ImpIva")
