@@ -14,6 +14,7 @@
                                 <field name="firma_fel"/>
                                 <field name="serie_fel"/>
                                 <field name="numero_fel"/>
+                                <field name="motivo_fel"/>
                             </group>
                             <group>
                                 <field name="nombre_cliente_fel"/>

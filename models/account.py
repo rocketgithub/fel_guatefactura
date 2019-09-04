@@ -6,7 +6,7 @@ from odoo.exceptions import UserError
 
 #import odoo.addons.l10n_gt_extra.a_letras
 
-from datetime import datetime
+import datetime
 from lxml import etree
 import base64
 import logging
@@ -19,7 +19,6 @@ class AccountInvoice(models.Model):
     _inherit = "account.invoice"
 
     firma_fel = fields.Char('Firma FEL', copy=False)
-    # pdf_fel = fields.Binary('PDF FEL', copy=False)
     serie_fel = fields.Char('Serie FEL', copy=False)
     numero_fel = fields.Char('Numero FEL', copy=False)
     nombre_cliente_fel = fields.Char('Nombre Cliente FEL', copy=False)
@@ -28,11 +27,11 @@ class AccountInvoice(models.Model):
     factura_original_id = fields.Many2one('account.invoice', string="Factura original FEL")
     documento_xml_fel = fields.Text('Documento xml FEL')
     resultado_xml_fel = fields.Text('Resultado xml FEL')
+    motivo_fel = fields.Char('Motivo FEL', copy=False)
 
     def invoice_validate(self):
         detalles = []
         subtotal = 0
-        logging.warn('fel_guatefactura invoice_validate')
         for factura in self:
             if factura.journal_id.usuario_fel and not factura.firma_fel and factura.amount_total != 0:
 
@@ -48,8 +47,6 @@ class AccountInvoice(models.Model):
                 else:
                     nit = factura.partner_id.vat
 
-#                NITReceptor.text = factura.partner_id.vat.replace('-','')
-#                if factura.partner_id.vat == "C/F":
                 NITReceptor.text = nit.replace('-','')
                 if nit == "C/F":
                     Nombre = etree.SubElement(Receptor, "Nombre")
@@ -75,6 +72,21 @@ class AccountInvoice(models.Model):
                 Referencia = etree.SubElement(InfoDoc, "SerieAdmin")
                 Referencia = etree.SubElement(InfoDoc, "NumeroAdmin")
                 Referencia = etree.SubElement(InfoDoc, "Reversion")
+                
+                total_exento = 0
+                total_neto = 0
+                for linea in factura.invoice_line_ids:
+                    precio_unitario = linea.price_unit * (100-linea.discount) / 100
+                    precio_unitario_base = linea.price_subtotal / linea.quantity
+
+                    total_linea = precio_unitario * linea.quantity
+                    total_linea_base = precio_unitario_base * linea.quantity
+
+                    total_impuestos = total_linea - total_linea_base
+                    if total_impuestos > 0:
+                        total_neto += total_linea_base
+                    else:
+                        total_exento += total_linea
 
                 Totales = etree.SubElement(Encabezado, "Totales")
 
@@ -83,11 +95,13 @@ class AccountInvoice(models.Model):
                 Descuento = etree.SubElement(Totales, "Descuento")
                 Descuento.text = "0"
                 Exento = etree.SubElement(Totales, "Exento")
-                Exento.text = "0"
+                Exento.text = "%.2f" % total_exento
+#                Exento.text = "0"
                 Otros = etree.SubElement(Totales, "Otros")
                 Otros.text = "0"
                 Neto = etree.SubElement(Totales, "Neto")
-                Neto.text = "%.2f" % factura.amount_untaxed
+                Neto.text = "%.2f" % total_neto
+#                Neto.text = "%.2f" % factura.amount_untaxed
                 Isr = etree.SubElement(Totales, "Isr")
                 Isr.text = "0"
                 Iva = etree.SubElement(Totales, "Iva")
@@ -121,7 +135,7 @@ class AccountInvoice(models.Model):
                         Cantidad = etree.SubElement(Productos, "Cantidad")
                         Cantidad.text = str(linea.quantity)
                         Precio = etree.SubElement(Productos, "Precio")
-                        Precio.text = "%.2f" % precio_unitario
+                        Precio.text = "%.6f" % precio_unitario
                         PorcDesc = etree.SubElement(Productos, "PorcDesc")
                         PorcDesc.text = "0"
                         ImpBruto = etree.SubElement(Productos, "ImpBruto")
@@ -129,11 +143,13 @@ class AccountInvoice(models.Model):
                         ImpDescuento = etree.SubElement(Productos, "ImpDescuento")
                         ImpDescuento.text = "0"
                         ImpExento = etree.SubElement(Productos, "ImpExento")
-                        ImpExento.text = "0"
+                        ImpExento.text = "%.2f" % total_linea_base if total_impuestos == 0 else "0"
+#                        ImpExento.text = "0"
                         ImpOtros = etree.SubElement(Productos, "ImpOtros")
                         ImpOtros.text = "0"
                         ImpNeto = etree.SubElement(Productos, "ImpNeto")
-                        ImpNeto.text = "%.2f" % total_linea_base
+                        ImpNeto.text = "%.2f" % total_linea_base if total_impuestos > 0 else "0"
+#                        ImpNeto.text = "%.2f" % total_linea_base
                         ImpIsr = etree.SubElement(Productos, "ImpIsr")
                         ImpIsr.text = "0"
                         ImpIva = etree.SubElement(Productos, "ImpIva")
@@ -155,7 +171,7 @@ class AccountInvoice(models.Model):
                 if factura.journal_id.tipo_documento_fel > 1:
                     DAPreimpreso.text = factura.factura_original_id.numero_fel
 
-                xmls = etree.tostring(DocElectronico, xml_declaration=True, encoding="UTF-8", pretty_print=True)
+                xmls = etree.tostring(DocElectronico, xml_declaration=True, encoding="UTF-8")
                 logging.warn(xmls)
                 factura.documento_xml_fel = xmls
 
@@ -165,7 +181,7 @@ class AccountInvoice(models.Model):
                 session.http_auth = HTTPBasicAuth('usr_guatefac', 'usrguatefac')
                 session.headers.update({'Authorization': 'Basic dXNyX2d1YXRlZmFjOnVzcmd1YXRlZmFj'})
                 transport = Transport(session=session)
-                # wsdl = 'https://pdte.guatefacturas.com/webservices63/feltest/Guatefac?WSDL'
+                #wsdl = 'https://pdte.guatefacturas.com/webservices63/feltest/Guatefac?WSDL'
                 wsdl = 'https://pdte.guatefacturas.com/webservices63/fel/Guatefac?WSDL'
                 client = zeep.Client(wsdl=wsdl, transport=transport)
 
@@ -184,9 +200,43 @@ class AccountInvoice(models.Model):
                     factura.nombre_cliente_fel = resultadoXML.xpath("//Nombre")[0].text
                     factura.direccion_cliente_fel = resultadoXML.xpath("//Direccion")[0].text
                 else:
-                    raise UserError(resultadoXML.xpath("//Resultado")[0].text)
+                    raise UserError(etree.tostring(resultadoXML))
 
         return super(AccountInvoice,self).invoice_validate()
+
+    @api.multi
+    def action_cancel(self):
+        result = super(AccountInvoice,self).action_cancel()
+        if result:
+            for factura in self:
+                if factura.journal_id.usuario_fel and factura.firma_fel:
+                    session = Session()
+                    session.verify = False
+                    session.auth = HTTPBasicAuth('usr_guatefac', 'usrguatefac')
+                    session.http_auth = HTTPBasicAuth('usr_guatefac', 'usrguatefac')
+                    session.headers.update({'Authorization': 'Basic dXNyX2d1YXRlZmFjOnVzcmd1YXRlZmFj'})
+                    transport = Transport(session=session)
+                    #wsdl = 'https://pdte.guatefacturas.com/webservices63/feltest/Guatefac?WSDL'
+                    wsdl = 'https://pdte.guatefacturas.com/webservices63/fel/Guatefac?WSDL'
+                    client = zeep.Client(wsdl=wsdl, transport=transport)
+
+                    resultado = client.service.anulaDocumento(factura.journal_id.usuario_fel, factura.journal_id.clave_fel, factura.journal_id.nit_fel, factura.serie_fel, factura.numero_fel, factura.partner_id.vat, datetime.date.today().strftime("%Y%m%d"), factura.motivo_fel)
+                    resultado = resultado.replace("&", "&amp;")
+                    logging.warn(resultado)
+                    resultadoXML = etree.XML(resultado)
+
+                    if len(resultadoXML.xpath("//ESTADO")) == 0 or resultadoXML.xpath("//ESTADO")[0].text != "ANULADO":
+                        raise UserError(etree.tostring(resultadoXML))
+
+        return result
+
+    @api.multi
+    def action_invoice_draft(self):
+        for factura in self:
+            if factura.firma_fel:
+                raise UserError("La factura ya fue enviada a Guatefacturas, por lo que ya no puede ser modificada")
+            else:
+                return super(AccountInvoice,self).action_invoice_draft()
 
 class AccountJournal(models.Model):
     _inherit = "account.journal"
