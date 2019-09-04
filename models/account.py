@@ -26,10 +26,13 @@ class AccountInvoice(models.Model):
     direccion_cliente_fel = fields.Char('Dirección Cliente FEL', copy=False)
     telefono_cliente_fel = fields.Char('Nombre Cliente FEL', copy=False)
     factura_original_id = fields.Many2one('account.invoice', string="Factura original FEL")
+    documento_xml_fel = fields.Text('Documento xml FEL')
+    resultado_xml_fel = fields.Text('Resultado xml FEL')
 
     def invoice_validate(self):
         detalles = []
         subtotal = 0
+        logging.warn('fel_guatefactura invoice_validate')
         for factura in self:
             if factura.journal_id.usuario_fel and not factura.firma_fel and factura.amount_total != 0:
 
@@ -39,8 +42,16 @@ class AccountInvoice(models.Model):
 
                 Receptor = etree.SubElement(Encabezado, "Receptor")
                 NITReceptor = etree.SubElement(Receptor, "NITReceptor")
-                NITReceptor.text = factura.partner_id.vat.replace('-','')
-                if factura.partner_id.vat == "C/F":
+                
+                if factura.partner_id.parent_id and factura.partner_id.nit_especifico:
+                    nit = factura.partner_id.nit_especifico
+                else:
+                    nit = factura.partner_id.vat
+
+#                NITReceptor.text = factura.partner_id.vat.replace('-','')
+#                if factura.partner_id.vat == "C/F":
+                NITReceptor.text = nit.replace('-','')
+                if nit == "C/F":
                     Nombre = etree.SubElement(Receptor, "Nombre")
                     Nombre.text = factura.partner_id.name
                     Direccion = etree.SubElement(Receptor, "Direccion")
@@ -146,6 +157,7 @@ class AccountInvoice(models.Model):
 
                 xmls = etree.tostring(DocElectronico, xml_declaration=True, encoding="UTF-8", pretty_print=True)
                 logging.warn(xmls)
+                factura.documento_xml_fel = xmls
 
                 session = Session()
                 session.verify = False
@@ -160,6 +172,7 @@ class AccountInvoice(models.Model):
                 resultado = client.service.generaDocumento(factura.journal_id.usuario_fel, factura.journal_id.clave_fel, factura.journal_id.nit_fel, factura.journal_id.establecimiento_fel, factura.journal_id.tipo_documento_fel, factura.journal_id.id_maquina_fel, "R", xmls)
                 resultado = resultado.replace("&", "&amp;")
                 logging.warn(resultado)
+                factura.resultado_xml_fel = resultado
                 resultadoXML = etree.XML(resultado)
 
                 if len(resultadoXML.xpath("//NumeroAutorizacion")) > 0:

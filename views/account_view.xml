@@ -22,6 +22,12 @@
                             </group>
                         </group>
                     </field>
+                    <field name="tax_line_ids" position="after">
+                        <group>
+                            <field name="documento_xml_fel"/>
+                            <field name="resultado_xml_fel"/>
+                        </group>                    
+                    </field>
                 </data>
             </field>
         </record>
