@@ -181,8 +181,8 @@ class AccountInvoice(models.Model):
                 session.http_auth = HTTPBasicAuth('usr_guatefac', 'usrguatefac')
                 session.headers.update({'Authorization': 'Basic dXNyX2d1YXRlZmFjOnVzcmd1YXRlZmFj'})
                 transport = Transport(session=session)
-                #wsdl = 'https://pdte.guatefacturas.com/webservices63/feltest/Guatefac?WSDL'
-                wsdl = 'https://pdte.guatefacturas.com/webservices63/fel/Guatefac?WSDL'
+                wsdl = 'https://pdte.guatefacturas.com/webservices63/feltest/Guatefac?WSDL'
+                #wsdl = 'https://pdte.guatefacturas.com/webservices63/fel/Guatefac?WSDL'
                 client = zeep.Client(wsdl=wsdl, transport=transport)
 
                 resultado = client.service.generaDocumento(factura.journal_id.usuario_fel, factura.journal_id.clave_fel, factura.journal_id.nit_fel, factura.journal_id.establecimiento_fel, factura.journal_id.tipo_documento_fel, factura.journal_id.id_maquina_fel, "R", xmls)
@@ -216,8 +216,8 @@ class AccountInvoice(models.Model):
                     session.http_auth = HTTPBasicAuth('usr_guatefac', 'usrguatefac')
                     session.headers.update({'Authorization': 'Basic dXNyX2d1YXRlZmFjOnVzcmd1YXRlZmFj'})
                     transport = Transport(session=session)
-                    #wsdl = 'https://pdte.guatefacturas.com/webservices63/feltest/Guatefac?WSDL'
-                    wsdl = 'https://pdte.guatefacturas.com/webservices63/fel/Guatefac?WSDL'
+                    wsdl = 'https://pdte.guatefacturas.com/webservices63/feltest/Guatefac?WSDL'
+                    #wsdl = 'https://pdte.guatefacturas.com/webservices63/fel/Guatefac?WSDL'
                     client = zeep.Client(wsdl=wsdl, transport=transport)
 
                     resultado = client.service.anulaDocumento(factura.journal_id.usuario_fel, factura.journal_id.clave_fel, factura.journal_id.nit_fel, factura.serie_fel, factura.numero_fel, factura.partner_id.vat, datetime.date.today().strftime("%Y%m%d"), factura.motivo_fel)
@@ -225,7 +225,7 @@ class AccountInvoice(models.Model):
                     logging.warn(resultado)
                     resultadoXML = etree.XML(resultado)
 
-                    if len(resultadoXML.xpath("//ESTADO")) == 0 or resultadoXML.xpath("//ESTADO")[0].text != "ANULADO":
+                    if (len(resultadoXML.xpath("//ESTADO")) != 0 and resultadoXML.xpath("//ESTADO")[0].text != "ANULADO") or (len(resultadoXML.xpath("//RESULTADO")) != 0 and resultadoXML.xpath("//RESULTADO")[0].text != "DOCUMENTO ANULADO PREVIAMENTE"):
                         raise UserError(etree.tostring(resultadoXML))
 
         return result
