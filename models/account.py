@@ -75,6 +75,7 @@ class AccountInvoice(models.Model):
                 
                 total_exento = 0
                 total_neto = 0
+                
                 for linea in factura.invoice_line_ids:
                     precio_unitario = linea.price_unit * (100-linea.discount) / 100
                     precio_unitario_base = linea.price_subtotal / linea.quantity
@@ -247,10 +248,3 @@ class AccountJournal(models.Model):
     establecimiento_fel = fields.Char('Establecimiento FEL', copy=False)
     tipo_documento_fel = fields.Integer('Tipo de Documento FEL', copy=False)
     id_maquina_fel = fields.Integer('ID Maquina FEL', copy=False)
-    # serie_fel = fields.Char('Serie FEL', copy=False)
-    # numero_resolucion_fel = fields.Char('Numero Resolución FEL', copy=False)
-    # fecha_resolucion_fel = fields.Date('Fecha Resolución FEL', copy=False)
-    # rango_inicial_fel = fields.Integer('Rango Inicial FEL', copy=False)
-    # rango_final_fel = fields.Integer('Rango Final FEL', copy=False)
-    # dispositivo_fel = fields.Char('Dispositivo FEL', copy=False)
-    # nombre_documento_fel = fields.Selection([('Factura', 'Factura'), ('Nota de crédito', 'Nota de crédito'), ('Nota de débito', 'Nota de débito')], 'Tipo de Documento FEL', copy=False)
