@@ -25,8 +25,10 @@
                     </field>
                     <field name="tax_line_ids" position="after">
                         <group>
-                            <field name="documento_xml_fel"/>
-                            <field name="resultado_xml_fel"/>
+                            <field name="documento_xml_fel_name" invisible="1"/>
+                            <field name="resultado_xml_fel_name" invisible="1"/>
+                            <field name="documento_xml_fel" readonly="1" filename="documento_xml_fel_name"/>
+                            <field name="resultado_xml_fel" readonly="1" filename="resultado_xml_fel_name"/>
                         </group>                    
                     </field>
                 </data>
