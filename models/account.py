@@ -4,8 +4,6 @@ from odoo import models, fields, api, _
 from odoo.addons import decimal_precision as dp
 from odoo.exceptions import UserError
 
-#import odoo.addons.l10n_gt_extra.a_letras
-
 import datetime
 from lxml import etree
 import base64
@@ -226,8 +224,9 @@ class AccountInvoice(models.Model):
                     logging.warn(resultado)
                     resultadoXML = etree.XML(resultado)
 
-                    if (len(resultadoXML.xpath("//ESTADO")) != 0 and resultadoXML.xpath("//ESTADO")[0].text != "ANULADO") or (len(resultadoXML.xpath("//RESULTADO")) != 0 and resultadoXML.xpath("//RESULTADO")[0].text != "DOCUMENTO ANULADO PREVIAMENTE"):
-                        raise UserError(etree.tostring(resultadoXML))
+                    if len(resultadoXML.xpath("//ESTADO")) != 0 and resultadoXML.xpath("//ESTADO")[0].text != "ANULADO":
+                        if len(resultadoXML.xpath("//ERROR")) != 0 and resultadoXML.xpath("//ERROR  ")[0].text != "DOCUMENTO ANULADO PREVIAMENTE":
+                            raise UserError(etree.tostring(resultadoXML))
 
         return result
 
