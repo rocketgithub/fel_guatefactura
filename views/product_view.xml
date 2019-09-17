@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <record id="fel_guatefactura_product_template_only_form_view" model="ir.ui.view">
+            <field name="name">fel_guatefactura.product.template.product.form</field>
+            <field name="model">product.template</field>
+            <field name="inherit_id" ref="product.product_template_only_form_view"/>
+            <field name="arch" type="xml">
+                <field name="default_code" position="before">
+                    <field name="tipo_bien_fel"/>
+                </field>
+            </field>
+        </record>
+
+    </data>
+</odoo>

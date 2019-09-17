@@ -23,8 +23,11 @@ class AccountInvoice(models.Model):
     direccion_cliente_fel = fields.Char('Dirección Cliente FEL', copy=False)
     telefono_cliente_fel = fields.Char('Nombre Cliente FEL', copy=False)
     factura_original_id = fields.Many2one('account.invoice', string="Factura original FEL")
-    documento_xml_fel = fields.Text('Documento xml FEL')
-    resultado_xml_fel = fields.Text('Resultado xml FEL')
+    documento_xml_fel = fields.Binary('Documento xml FEL')
+    documento_xml_fel_name = fields.Char('Nombre doc xml fel', default='documento_xml_fel.xml', size=32)
+    resultado_xml_fel = fields.Binary('Resultado xml FEL')
+    resultado_xml_fel_name = fields.Char('Resultado doc xml fel', default='resultado_xml_fel.xml', size=32)
+
     motivo_fel = fields.Char('Motivo FEL', copy=False)
 
     def invoice_validate(self):
@@ -157,7 +160,10 @@ class AccountInvoice(models.Model):
                         ImpTotal.text = "%.2f" % total_linea
                         DatosAdicionalesProd = etree.SubElement(Productos, "DatosAdicionalesProd")
                         TipoVentaDet = etree.SubElement(Productos, "TipoVentaDet")
-                        TipoVentaDet.text = "B" if linea.product_id.type == "product" else "S"
+                        if linea.product_id.tipo_bien_fel:
+                            TipoVentaDet.text = "B" if linea.product_id.tipo_bien_fel == "bien" else "S"                        
+                        else:
+                            TipoVentaDet.text = "B" if linea.product_id.type == "product" else "S"
 
                         total += total_linea
                         subtotal += total_linea_base
@@ -171,8 +177,9 @@ class AccountInvoice(models.Model):
                     DAPreimpreso.text = factura.factura_original_id.numero_fel
 
                 xmls = etree.tostring(DocElectronico, xml_declaration=True, encoding="UTF-8")
-                logging.warn(xmls)
-                factura.documento_xml_fel = xmls
+#                factura.documento_xml_fel = xmls
+                datos = base64.b64encode(str(xmls).encode("utf-8"))
+                self.write({'documento_xml_fel':datos, 'documento_xml_fel_name':'documento_xml_fel.xml'})
 
                 session = Session()
                 session.verify = False
@@ -188,7 +195,10 @@ class AccountInvoice(models.Model):
                 resultado = client.service.generaDocumento(factura.journal_id.usuario_fel, factura.journal_id.clave_fel, factura.journal_id.nit_fel, factura.journal_id.establecimiento_fel, factura.journal_id.tipo_documento_fel, factura.journal_id.id_maquina_fel, "R", xmls)
                 resultado = resultado.replace("&", "&amp;")
                 logging.warn(resultado)
-                factura.resultado_xml_fel = resultado
+#                factura.resultado_xml_fel = resultado
+                datos = base64.b64encode(str(resultado).encode("utf-8"))
+                self.write({'resultado_xml_fel':datos, 'resultado_xml_fel_name':'resultado_xml_fel.xml'})
+
                 resultadoXML = etree.XML(resultado)
 
                 if len(resultadoXML.xpath("//NumeroAutorizacion")) > 0:
