@@ -178,9 +178,9 @@ class AccountInvoice(models.Model):
 
                 xmls = etree.tostring(DocElectronico, xml_declaration=True, encoding="UTF-8")
                 logging.warn(xmls)
-                datos = base64.b64encode(xmls)
-#                factura.documento_xml_fel = datos
-#                factura.documento_xml_fel_name = "documento_xml_fel.xml"
+                datos = base64.b64encode(b" "+xmls)
+                factura.documento_xml_fel = datos
+                factura.documento_xml_fel_name = "documento_xml_fel.xml"
 
                 session = Session()
                 session.verify = False
@@ -196,9 +196,9 @@ class AccountInvoice(models.Model):
                 resultado = client.service.generaDocumento(factura.journal_id.usuario_fel, factura.journal_id.clave_fel, factura.journal_id.nit_fel, factura.journal_id.establecimiento_fel, factura.journal_id.tipo_documento_fel, factura.journal_id.id_maquina_fel, "R", xmls)
                 resultado = resultado.replace("&", "&amp;")
                 logging.warn(resultado)
-                datos = base64.b64encode(resultado.encode("utf-8"))
-#                factura.resultado_xml_fel = datos
-#                factura.resultado_xml_fel_name = "resultado_xml_fel.xml"
+                datos = base64.b64encode(b" "+(resultado.encode("utf-8")))
+                factura.resultado_xml_fel = resultado
+                factura.resultado_xml_fel_name = "resultado_xml_fel.xml"
 
                 resultadoXML = etree.XML(resultado)
 
