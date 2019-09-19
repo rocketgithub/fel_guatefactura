@@ -178,8 +178,8 @@ class AccountInvoice(models.Model):
 
                 xmls = etree.tostring(DocElectronico, xml_declaration=True, encoding="UTF-8")
 #                factura.documento_xml_fel = xmls
-                datos = base64.b64encode(str(xmls).encode("utf-8"))
-                self.write({'documento_xml_fel':datos, 'documento_xml_fel_name':'documento_xml_fel.xml'})
+                datos = base64.b64encode(xmls.encode("utf-8"))
+                self.write({'documento_xml_fel': datos, 'documento_xml_fel_name': 'documento_xml_fel.xml'})
 
                 session = Session()
                 session.verify = False
@@ -196,7 +196,7 @@ class AccountInvoice(models.Model):
                 resultado = resultado.replace("&", "&amp;")
                 logging.warn(resultado)
 #                factura.resultado_xml_fel = resultado
-                datos = base64.b64encode(str(resultado).encode("utf-8"))
+                datos = base64.b64encode(resultado.encode("utf-8"))
                 self.write({'resultado_xml_fel':datos, 'resultado_xml_fel_name':'resultado_xml_fel.xml'})
 
                 resultadoXML = etree.XML(resultado)
