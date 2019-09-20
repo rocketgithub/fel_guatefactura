@@ -68,7 +68,7 @@ class AccountInvoice(models.Model):
                 Tasa = etree.SubElement(InfoDoc, "Tasa")
                 Tasa.text = "1"
                 Referencia = etree.SubElement(InfoDoc, "Referencia")
-                Referencia.text = str(10000+factura.id)
+                Referencia.text = str(20000+factura.id)
                 Referencia = etree.SubElement(InfoDoc, "NumeroAcceso")
                 Referencia = etree.SubElement(InfoDoc, "SerieAdmin")
                 Referencia = etree.SubElement(InfoDoc, "NumeroAdmin")
