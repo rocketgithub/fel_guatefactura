@@ -23,9 +23,9 @@ class AccountInvoice(models.Model):
     direccion_cliente_fel = fields.Char('Dirección Cliente FEL', copy=False)
     telefono_cliente_fel = fields.Char('Nombre Cliente FEL', copy=False)
     factura_original_id = fields.Many2one('account.invoice', string="Factura original FEL")
-    documento_xml_fel = fields.Binary('Documento xml FEL')
+    documento_xml_fel = fields.Binary('Documento xml FEL', copy=False)
     documento_xml_fel_name = fields.Char('Nombre doc xml fel', default='documento_xml_fel.xml', size=32)
-    resultado_xml_fel = fields.Binary('Resultado xml FEL')
+    resultado_xml_fel = fields.Binary('Resultado xml FEL', copy=False)
     resultado_xml_fel_name = fields.Char('Resultado doc xml fel', default='resultado_xml_fel.xml', size=32)
 
     motivo_fel = fields.Char('Motivo FEL', copy=False)
@@ -42,7 +42,7 @@ class AccountInvoice(models.Model):
 
                 Receptor = etree.SubElement(Encabezado, "Receptor")
                 NITReceptor = etree.SubElement(Receptor, "NITReceptor")
-                
+
                 if factura.partner_id.parent_id and factura.partner_id.nit_especifico:
                     nit = factura.partner_id.nit_especifico
                 else:
@@ -73,10 +73,10 @@ class AccountInvoice(models.Model):
                 Referencia = etree.SubElement(InfoDoc, "SerieAdmin")
                 Referencia = etree.SubElement(InfoDoc, "NumeroAdmin")
                 Referencia = etree.SubElement(InfoDoc, "Reversion")
-                
+
                 total_exento = 0
                 total_neto = 0
-                
+
                 for linea in factura.invoice_line_ids:
                     precio_unitario = linea.price_unit * (100-linea.discount) / 100
                     precio_unitario_base = linea.price_subtotal / linea.quantity
@@ -128,7 +128,7 @@ class AccountInvoice(models.Model):
                         Productos = etree.SubElement(Detalles, "Productos")
 
                         Producto = etree.SubElement(Productos, "Producto")
-                        # Producto.text = linea.product_id.default_code or "-"
+#                        Producto.text = linea.product_id.default_code or "-"
                         Producto.text = 'P'+str(linea.product_id.id)
                         Descripcion = etree.SubElement(Productos, "Descripcion")
                         Descripcion.text = linea.name
@@ -161,7 +161,7 @@ class AccountInvoice(models.Model):
                         DatosAdicionalesProd = etree.SubElement(Productos, "DatosAdicionalesProd")
                         TipoVentaDet = etree.SubElement(Productos, "TipoVentaDet")
                         if linea.product_id.tipo_bien_fel:
-                            TipoVentaDet.text = "B" if linea.product_id.tipo_bien_fel == "bien" else "S"                        
+                            TipoVentaDet.text = "B" if linea.product_id.tipo_bien_fel == "bien" else "S"
                         else:
                             TipoVentaDet.text = "B" if linea.product_id.type == "product" else "S"
 
@@ -193,25 +193,31 @@ class AccountInvoice(models.Model):
                     wsdl = 'https://pdte.guatefacturas.com/webservices63/feltest/Guatefac?WSDL'
                 client = zeep.Client(wsdl=wsdl, transport=transport)
 
-                resultado = client.service.generaDocumento(factura.journal_id.usuario_fel, factura.journal_id.clave_fel, factura.journal_id.nit_fel, factura.journal_id.establecimiento_fel, factura.journal_id.tipo_documento_fel, factura.journal_id.id_maquina_fel, "R", xmls)
-                resultado = resultado.replace("&", "&amp;")
+                resultado = client.service.generaDocumento(factura.journal_id.usuario_fel, factura.journal_id.clave_fel, factura.journal_id.nit_fel, factura.journal_id.establecimiento_fel, factura.journal_id.tipo_documento_fel, factura.journal_id.id_maquina_fel, "D", xmls)
                 logging.warn(resultado)
-                datos = base64.b64encode(b" "+(resultado.encode("utf-8")))
-                factura.resultado_xml_fel = datos
-                factura.resultado_xml_fel_name = "resultado_xml_fel.xml"
+                logging.warn(resultado.find("dte:SAT ClaseDocumento"))
 
-                resultadoXML = etree.XML(resultado)
+                if resultado.find("dte:SAT ClaseDocumento") >= 0:
+                    resultado = resultado.replace("&", "&amp;")
+                    resultado = resultado.replace("<Resultado>", "")
+                    resultado = resultado.replace("</Resultado>", "")
+                    datos = base64.b64encode(b" "+(resultado.encode("utf-8")))
+                    factura.resultado_xml_fel = datos
+                    factura.resultado_xml_fel_name = "resultado_xml_fel.xml"
 
-                if len(resultadoXML.xpath("//NumeroAutorizacion")) > 0:
-                    numero = resultadoXML.xpath("//Serie")[0].text+'-'+resultadoXML.xpath("//Preimpreso")[0].text
-                    factura.firma_fel = resultadoXML.xpath("//NumeroAutorizacion")[0].text
-                    factura.name = numero
-                    factura.serie_fel = resultadoXML.xpath("//Serie")[0].text
-                    factura.numero_fel = resultadoXML.xpath("//Preimpreso")[0].text
-                    factura.nombre_cliente_fel = resultadoXML.xpath("//Nombre")[0].text
-                    factura.direccion_cliente_fel = resultadoXML.xpath("//Direccion")[0].text
+                    resultadoXML = etree.XML(resultado.encode("utf-8"))
+                    numero_autorizacion = resultadoXML.find(".//{http://www.sat.gob.gt/dte/fel/0.1.0}NumeroAutorizacion")
+                    nombre_receptor = resultadoXML.find(".//{http://www.sat.gob.gt/dte/fel/0.1.0}Receptor")
+                    direccion_receptor = resultadoXML.find(".//{http://www.sat.gob.gt/dte/fel/0.1.0}DireccionReceptor")
+
+                    factura.firma_fel = numero_autorizacion.text
+                    factura.name = numero_autorizacion.get("Serie")+"-"+numero_autorizacion.get("Numero")
+                    factura.serie_fel = numero_autorizacion.get("Serie")
+                    factura.numero_fel = numero_autorizacion.get("Numero")
+                    factura.nombre_cliente_fel = nombre_receptor.get("NombreReceptor")
+                    factura.direccion_cliente_fel = direccion_receptor.text
                 else:
-                    raise UserError(etree.tostring(resultadoXML))
+                    raise UserError("Error en Guatefacturas: "+resultado)
 
         return super(AccountInvoice,self).invoice_validate()
 
@@ -238,8 +244,8 @@ class AccountInvoice(models.Model):
                     resultadoXML = etree.XML(resultado)
 
                     if len(resultadoXML.xpath("//ESTADO")) != 0 and resultadoXML.xpath("//ESTADO")[0].text != "ANULADO":
-                        if len(resultadoXML.xpath("//ERROR")) != 0 and resultadoXML.xpath("//ERROR  ")[0].text != "DOCUMENTO ANULADO PREVIAMENTE":
-                            raise UserError(etree.tostring(resultadoXML))
+                        if len(resultadoXML.xpath("//ERROR")) != 0 and resultadoXML.xpath("//ERROR")[0].text != "DOCUMENTO ANULADO PREVIAMENTE":
+                            raise UserError("Error en Guatefacturas: "+etree.tostring(resultadoXML))
 
         return result
 
