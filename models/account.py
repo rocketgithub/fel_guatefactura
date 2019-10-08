@@ -49,7 +49,7 @@ class AccountInvoice(models.Model):
                     nit = factura.partner_id.vat
 
                 NITReceptor.text = nit.replace('-','')
-                if nit == "C/F":
+                if nit == "C/F" or nit == "CF":
                     Nombre = etree.SubElement(Receptor, "Nombre")
                     Nombre.text = factura.partner_id.name
                     Direccion = etree.SubElement(Receptor, "Direccion")
@@ -76,7 +76,8 @@ class AccountInvoice(models.Model):
 
                 total_exento = 0
                 total_neto = 0
-
+                total_con_impuestos = 0
+                total_sin_impuestos = 0
                 for linea in factura.invoice_line_ids:
                     precio_unitario = linea.price_unit * (100-linea.discount) / 100
                     precio_unitario_base = linea.price_subtotal / linea.quantity
@@ -84,38 +85,48 @@ class AccountInvoice(models.Model):
                     total_linea = precio_unitario * linea.quantity
                     total_linea_base = precio_unitario_base * linea.quantity
 
-                    total_impuestos = total_linea - total_linea_base
-                    if total_impuestos > 0:
+                    total_linea_impuestos = total_linea - total_linea_base
+                    
+                    total_con_impuestos += total_linea
+                    total_sin_impuestos += total_linea_base
+                    if total_linea_impuestos > 0:
                         total_neto += total_linea_base
                     else:
                         total_exento += total_linea
 
+                total_isr = 0
+                if factura.journal_id.tipo_documento_fel == 5:
+                    total_isr += abs(factura.amount_tax)
+                            
+                logging.getLogger("total_isr").warn(total_isr)
+                logging.getLogger("total_con_impuestos").warn(total_con_impuestos)
+                logging.getLogger("total_sin_impuestos").warn(total_sin_impuestos)
+                                
                 Totales = etree.SubElement(Encabezado, "Totales")
 
                 Bruto = etree.SubElement(Totales, "Bruto")
-                Bruto.text = "%.2f" % factura.amount_total
+                Bruto.text = "%.2f" % total_con_impuestos
                 Descuento = etree.SubElement(Totales, "Descuento")
                 Descuento.text = "0"
                 Exento = etree.SubElement(Totales, "Exento")
                 Exento.text = "%.2f" % total_exento
-#                Exento.text = "0"
                 Otros = etree.SubElement(Totales, "Otros")
                 Otros.text = "0"
                 Neto = etree.SubElement(Totales, "Neto")
                 Neto.text = "%.2f" % total_neto
-#                Neto.text = "%.2f" % factura.amount_untaxed
                 Isr = etree.SubElement(Totales, "Isr")
-                Isr.text = "0"
+                Isr.text = str(total_isr)
                 Iva = etree.SubElement(Totales, "Iva")
-                Iva.text = "%.2f" % (factura.amount_total - factura.amount_untaxed)
+                Iva.text = "%.2f" % (total_con_impuestos - total_sin_impuestos)
                 Total = etree.SubElement(Totales, "Total")
-                Total.text = "%.2f" % factura.amount_total
+                Total.text = "%.2f" % total_con_impuestos
 
                 subtotal = 0
                 total = 0
                 Detalles = etree.SubElement(DocElectronico, "Detalles")
                 for linea in factura.invoice_line_ids:
                     if linea.price_unit != 0 and linea.quantity != 0:
+                    
                         precio_unitario = linea.price_unit * (100-linea.discount) / 100
                         precio_unitario_base = linea.price_subtotal / linea.quantity
 
@@ -124,12 +135,18 @@ class AccountInvoice(models.Model):
 
                         total_impuestos = total_linea - total_linea_base
                         tasa = "12" if total_impuestos > 0 else "0"
-
+                        
+                        total_isr_linea = 0
+                        if factura.journal_id.tipo_documento_fel == 5:
+                            total_isr_linea = linea.price_subtotal / total_sin_impuestos * total_isr
+                        
                         Productos = etree.SubElement(Detalles, "Productos")
 
                         Producto = etree.SubElement(Productos, "Producto")
-#                        Producto.text = linea.product_id.default_code or "-"
-                        Producto.text = 'P'+str(linea.product_id.id)
+                        if factura.journal_id.tipo_documento_fel != 5:
+                            Producto.text = 'P'+str(linea.product_id.id)
+                        else:
+                            Producto.text = "1"
                         Descripcion = etree.SubElement(Productos, "Descripcion")
                         Descripcion.text = linea.name
                         Medida = etree.SubElement(Productos, "Medida")
@@ -146,14 +163,12 @@ class AccountInvoice(models.Model):
                         ImpDescuento.text = "0"
                         ImpExento = etree.SubElement(Productos, "ImpExento")
                         ImpExento.text = "%.2f" % total_linea_base if total_impuestos == 0 else "0"
-#                        ImpExento.text = "0"
                         ImpOtros = etree.SubElement(Productos, "ImpOtros")
                         ImpOtros.text = "0"
                         ImpNeto = etree.SubElement(Productos, "ImpNeto")
                         ImpNeto.text = "%.2f" % total_linea_base if total_impuestos > 0 else "0"
-#                        ImpNeto.text = "%.2f" % total_linea_base
                         ImpIsr = etree.SubElement(Productos, "ImpIsr")
-                        ImpIsr.text = "0"
+                        ImpIsr.text = str(total_isr_linea)
                         ImpIva = etree.SubElement(Productos, "ImpIva")
                         ImpIva.text = "%.2f" % (total_linea - total_linea_base)
                         ImpTotal = etree.SubElement(Productos, "ImpTotal")
@@ -170,10 +185,10 @@ class AccountInvoice(models.Model):
 
                 DocAsociados = etree.SubElement(Detalles, "DocAsociados")
                 DASerie = etree.SubElement(DocAsociados, "DASerie")
-                if factura.journal_id.tipo_documento_fel > 1:
+                if factura.journal_id.tipo_documento_fel in [6, 9, 10]:
                     DASerie.text = factura.factura_original_id.serie_fel
                 DAPreimpreso = etree.SubElement(DocAsociados, "DAPreimpreso")
-                if factura.journal_id.tipo_documento_fel > 1:
+                if factura.journal_id.tipo_documento_fel in [6, 9, 10]:
                     DAPreimpreso.text = factura.factura_original_id.numero_fel
 
                 xmls = etree.tostring(DocElectronico, encoding="UTF-8")
