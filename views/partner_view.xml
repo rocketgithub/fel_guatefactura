@@ -8,8 +8,12 @@
             <field name="inherit_id" ref="base.view_partner_form"/>
             <field name="arch" type="xml">
                 <data>
-                    <field name='vat' position="after">
-                        <field name='nit_especifico'/>
+                    <field name="ref" position="after">
+                        <field name="nit_especifico"/>
+                        <field name="numero_identificacion_fel"/>
+                        <field name="pais_emision_fel"/>
+                        <field name="departamento_emision_fel"/>
+                        <field name="municipio_emision_fel"/>
                     </field>
                 </data>
             </field>

@@ -35,13 +35,16 @@ class AccountInvoice(models.Model):
         subtotal = 0
         for factura in self:
             if factura.journal_id.usuario_fel and not factura.firma_fel and factura.amount_total != 0:
-
+            
                 DocElectronico = etree.Element("DocElectronico")
 
                 Encabezado = etree.SubElement(DocElectronico, "Encabezado")
 
                 Receptor = etree.SubElement(Encabezado, "Receptor")
+                
                 NITReceptor = etree.SubElement(Receptor, "NITReceptor")
+                if factura.journal_id.tipo_documento_fel == 5:
+                    NITReceptor.tag = "NITVendedor"
 
                 if factura.partner_id.parent_id and factura.partner_id.nit_especifico:
                     nit = factura.partner_id.nit_especifico
@@ -51,6 +54,9 @@ class AccountInvoice(models.Model):
                 NITReceptor.text = nit.replace('-','')
                 if nit == "C/F" or nit == "CF":
                     Nombre = etree.SubElement(Receptor, "Nombre")
+                    if factura.journal_id.tipo_documento_fel == 5:
+                        Nombre.tag = "NombreVendedor"
+
                     Nombre.text = factura.partner_id.name
                     Direccion = etree.SubElement(Receptor, "Direccion")
                     Direccion.text = factura.partner_id.street or "."
@@ -67,6 +73,21 @@ class AccountInvoice(models.Model):
                 Moneda.text = "1"
                 Tasa = etree.SubElement(InfoDoc, "Tasa")
                 Tasa.text = "1"
+                
+                if factura.journal_id.tipo_documento_fel == 5:
+                    TipoDocIdentificacion = etree.SubElement(InfoDoc, "TipoDocIdentificacion")
+                    TipoDocIdentificacion.text = "2"
+                    NumeroIdentificacion = etree.SubElement(InfoDoc, "NumeroIdentificacion")
+                    NumeroIdentificacion.text = factura.partner_id.numero_identificacion_fel
+                    PaisEmision = etree.SubElement(InfoDoc, "PaisEmision")
+                    PaisEmision.text = factura.partner_id.pais_emision_fel
+                    DepartamentoEmision = etree.SubElement(InfoDoc, "DepartamentoEmision")
+                    DepartamentoEmision.text = factura.partner_id.departamento_emision_fel
+                    MunicipioEmision = etree.SubElement(InfoDoc, "MunicipioEmision")
+                    MunicipioEmision.text = factura.partner_id.municipio_emision_fel
+                    PorcISR = etree.SubElement(InfoDoc, "PorcISR")
+                    PorcISR.text = "0.05"
+                
                 Referencia = etree.SubElement(InfoDoc, "Referencia")
                 Referencia.text = str(20000+factura.id)
                 Referencia = etree.SubElement(InfoDoc, "NumeroAcceso")
