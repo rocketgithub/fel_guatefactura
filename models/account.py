@@ -12,6 +12,7 @@ from requests import Session
 from requests.auth import HTTPBasicAuth
 import zeep
 from zeep.transports import Transport
+import html
 
 class AccountInvoice(models.Model):
     _inherit = "account.invoice"
@@ -35,13 +36,13 @@ class AccountInvoice(models.Model):
         subtotal = 0
         for factura in self:
             if factura.journal_id.usuario_fel and not factura.firma_fel and factura.amount_total != 0:
-            
+
                 DocElectronico = etree.Element("DocElectronico")
 
                 Encabezado = etree.SubElement(DocElectronico, "Encabezado")
 
                 Receptor = etree.SubElement(Encabezado, "Receptor")
-                
+
                 NITReceptor = etree.SubElement(Receptor, "NITReceptor")
                 if factura.journal_id.tipo_documento_fel == 5:
                     NITReceptor.tag = "NITVendedor"
@@ -73,7 +74,7 @@ class AccountInvoice(models.Model):
                 Moneda.text = "1"
                 Tasa = etree.SubElement(InfoDoc, "Tasa")
                 Tasa.text = "1"
-                
+
                 if factura.journal_id.tipo_documento_fel == 5:
                     TipoDocIdentificacion = etree.SubElement(InfoDoc, "TipoDocIdentificacion")
                     TipoDocIdentificacion.text = "2"
@@ -87,7 +88,7 @@ class AccountInvoice(models.Model):
                     MunicipioEmision.text = factura.partner_id.municipio_emision_fel
                     PorcISR = etree.SubElement(InfoDoc, "PorcISR")
                     PorcISR.text = "0.05"
-                
+
                 Referencia = etree.SubElement(InfoDoc, "Referencia")
                 Referencia.text = str(20000+factura.id)
                 Referencia = etree.SubElement(InfoDoc, "NumeroAcceso")
@@ -107,7 +108,7 @@ class AccountInvoice(models.Model):
                     total_linea_base = precio_unitario_base * linea.quantity
 
                     total_linea_impuestos = total_linea - total_linea_base
-                    
+
                     total_con_impuestos += total_linea
                     total_sin_impuestos += total_linea_base
                     if total_linea_impuestos > 0:
@@ -118,11 +119,7 @@ class AccountInvoice(models.Model):
                 total_isr = 0
                 if factura.journal_id.tipo_documento_fel == 5:
                     total_isr += abs(factura.amount_tax)
-                            
-                logging.getLogger("total_isr").warn(total_isr)
-                logging.getLogger("total_con_impuestos").warn(total_con_impuestos)
-                logging.getLogger("total_sin_impuestos").warn(total_sin_impuestos)
-                                
+
                 Totales = etree.SubElement(Encabezado, "Totales")
 
                 Bruto = etree.SubElement(Totales, "Bruto")
@@ -147,7 +144,7 @@ class AccountInvoice(models.Model):
                 Detalles = etree.SubElement(DocElectronico, "Detalles")
                 for linea in factura.invoice_line_ids:
                     if linea.price_unit != 0 and linea.quantity != 0:
-                    
+
                         precio_unitario = linea.price_unit * (100-linea.discount) / 100
                         precio_unitario_base = linea.price_subtotal / linea.quantity
 
@@ -156,11 +153,11 @@ class AccountInvoice(models.Model):
 
                         total_impuestos = total_linea - total_linea_base
                         tasa = "12" if total_impuestos > 0 else "0"
-                        
+
                         total_isr_linea = 0
                         if factura.journal_id.tipo_documento_fel == 5:
                             total_isr_linea = linea.price_subtotal / total_sin_impuestos * total_isr
-                        
+
                         Productos = etree.SubElement(Detalles, "Productos")
 
                         Producto = etree.SubElement(Productos, "Producto")
@@ -231,7 +228,6 @@ class AccountInvoice(models.Model):
 
                 resultado = client.service.generaDocumento(factura.journal_id.usuario_fel, factura.journal_id.clave_fel, factura.journal_id.nit_fel, factura.journal_id.establecimiento_fel, factura.journal_id.tipo_documento_fel, factura.journal_id.id_maquina_fel, "D", xmls)
                 logging.warn(resultado)
-                logging.warn(resultado.find("dte:SAT ClaseDocumento"))
 
                 if resultado.find("dte:SAT ClaseDocumento") >= 0:
                     resultado = resultado.replace("&", "&amp;")
@@ -250,8 +246,8 @@ class AccountInvoice(models.Model):
                     factura.name = numero_autorizacion.get("Serie")+"-"+numero_autorizacion.get("Numero")
                     factura.serie_fel = numero_autorizacion.get("Serie")
                     factura.numero_fel = numero_autorizacion.get("Numero")
-                    factura.nombre_cliente_fel = nombre_receptor.get("NombreReceptor")
-                    factura.direccion_cliente_fel = direccion_receptor.text
+                    factura.nombre_cliente_fel = html.unescape(nombre_receptor.get("NombreReceptor"))
+                    factura.direccion_cliente_fel = html.unescape(direccion_receptor.find("{http://www.sat.gob.gt/dte/fel/0.1.0}Direccion").text)
                 else:
                     raise UserError("Error en Guatefacturas: "+resultado)
 
