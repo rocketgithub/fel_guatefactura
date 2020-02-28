@@ -247,7 +247,7 @@ class AccountInvoice(models.Model):
                     factura.serie_fel = numero_autorizacion.get("Serie")
                     factura.numero_fel = numero_autorizacion.get("Numero")
                     factura.nombre_cliente_fel = html.unescape(nombre_receptor.get("NombreReceptor"))
-                    factura.direccion_cliente_fel = html.unescape(direccion_receptor.find("{http://www.sat.gob.gt/dte/fel/0.1.0}Direccion").text)
+                    factura.direccion_cliente_fel = html.unescape(direccion_receptor.find("{http://www.sat.gob.gt/dte/fel/0.1.0}Direccion").text) if direccion_receptor else ''
                 else:
                     raise UserError("Error en Guatefacturas: "+resultado)
 
