@@ -104,10 +104,10 @@ class AccountInvoice(models.Model):
                     precio_unitario = linea.price_unit * (100-linea.discount) / 100
                     precio_unitario_base = linea.price_subtotal / linea.quantity
 
-                    total_linea = precio_unitario * linea.quantity
-                    total_linea_base = precio_unitario_base * linea.quantity
+                    total_linea = factura.currency_id.round(precio_unitario * linea.quantity)
+                    total_linea_base = factura.currency_id.round(precio_unitario_base * linea.quantity)
 
-                    total_linea_impuestos = total_linea - total_linea_base
+                    total_linea_impuestos = factura.currency_id.round(total_linea - total_linea_base)
 
                     total_con_impuestos += total_linea
                     total_sin_impuestos += total_linea_base
