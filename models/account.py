@@ -151,8 +151,8 @@ class AccountInvoice(models.Model):
                         total_linea = factura.currency_id.round(precio_unitario * linea.quantity)
                         total_linea_base = factura.currency_id.round(precio_unitario_base * linea.quantity)
 
-                        total_impuestos = factura.currency_id.round(total_linea - total_linea_base)
-                        tasa = "12" if total_impuestos > 0 else "0"
+                        total_linea_impuestos = factura.currency_id.round(total_linea - total_linea_base)
+                        tasa = "12" if total_linea_impuestos > 0 else "0"
 
                         total_isr_linea = 0
                         if factura.journal_id.tipo_documento_fel == 5:
@@ -180,15 +180,15 @@ class AccountInvoice(models.Model):
                         ImpDescuento = etree.SubElement(Productos, "ImpDescuento")
                         ImpDescuento.text = "0"
                         ImpExento = etree.SubElement(Productos, "ImpExento")
-                        ImpExento.text = "%.2f" % total_linea_base if total_impuestos == 0 else "0"
+                        ImpExento.text = "%.2f" % total_linea_base if total_linea_impuestos == 0 else "0"
                         ImpOtros = etree.SubElement(Productos, "ImpOtros")
                         ImpOtros.text = "0"
                         ImpNeto = etree.SubElement(Productos, "ImpNeto")
-                        ImpNeto.text = "%.2f" % total_linea_base if total_impuestos > 0 else "0"
+                        ImpNeto.text = "%.2f" % total_linea_base if total_linea_impuestos > 0 else "0"
                         ImpIsr = etree.SubElement(Productos, "ImpIsr")
                         ImpIsr.text = str(total_isr_linea)
                         ImpIva = etree.SubElement(Productos, "ImpIva")
-                        ImpIva.text = "%.2f" % (total_linea - total_linea_base)
+                        ImpIva.text = "%.2f" % total_linea_impuestos
                         ImpTotal = etree.SubElement(Productos, "ImpTotal")
                         ImpTotal.text = "%.2f" % total_linea
                         DatosAdicionalesProd = etree.SubElement(Productos, "DatosAdicionalesProd")
