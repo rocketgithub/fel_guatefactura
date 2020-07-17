@@ -221,9 +221,9 @@ class AccountInvoice(models.Model):
                 session.http_auth = HTTPBasicAuth('usr_guatefac', 'usrguatefac')
                 session.headers.update({'Authorization': 'Basic dXNyX2d1YXRlZmFjOnVzcmd1YXRlZmFj'})
                 transport = Transport(session=session)
-                wsdl = 'https://pdte.guatefacturas.com/webservices63/fel/Guatefac?WSDL'
+                wsdl = 'https://dte.guatefacturas.com/webservices63/fel/Guatefac?WSDL'
                 if factura.company_id.pruebas_fel:
-                    wsdl = 'https://pdte.guatefacturas.com/webservices63/feltest/Guatefac?WSDL'
+                    wsdl = 'https://dte.guatefacturas.com/webservices63/feltest/Guatefac?WSDL'
                 client = zeep.Client(wsdl=wsdl, transport=transport)
 
                 resultado = client.service.generaDocumento(factura.journal_id.usuario_fel, factura.journal_id.clave_fel, factura.journal_id.nit_fel, factura.journal_id.establecimiento_fel, factura.journal_id.tipo_documento_fel, factura.journal_id.id_maquina_fel, "D", xmls)
@@ -265,9 +265,9 @@ class AccountInvoice(models.Model):
                     session.http_auth = HTTPBasicAuth('usr_guatefac', 'usrguatefac')
                     session.headers.update({'Authorization': 'Basic dXNyX2d1YXRlZmFjOnVzcmd1YXRlZmFj'})
                     transport = Transport(session=session)
-                    wsdl = 'https://pdte.guatefacturas.com/webservices63/fel/Guatefac?WSDL'
+                    wsdl = 'https://dte.guatefacturas.com/webservices63/fel/Guatefac?WSDL'
                     if factura.company_id.pruebas_fel:
-                        wsdl = 'https://pdte.guatefacturas.com/webservices63/feltest/Guatefac?WSDL'
+                        wsdl = 'https://dte.guatefacturas.com/webservices63/feltest/Guatefac?WSDL'
                     client = zeep.Client(wsdl=wsdl, transport=transport)
 
                     resultado = client.service.anulaDocumento(factura.journal_id.usuario_fel, factura.journal_id.clave_fel, factura.journal_id.nit_fel, factura.serie_fel, factura.numero_fel, factura.partner_id.vat, datetime.date.today().strftime("%Y%m%d"), factura.motivo_fel)
