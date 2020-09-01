@@ -240,14 +240,14 @@ class AccountInvoice(models.Model):
                     resultadoXML = etree.XML(resultado.encode("utf-8"))
                     numero_autorizacion = resultadoXML.xpath("//*[local-name() = 'NumeroAutorizacion']")[0]
                     nombre_receptor = resultadoXML.xpath("//*[local-name() = 'Receptor']")[0]
-                    direccion_receptor = resultadoXML.xpath("//*[local-name() = 'DireccionReceptor']")
+                    direccion_receptor = resultadoXML.xpath("//*[local-name() = 'DireccionReceptor']/*[local-name() = 'Direccion']")
 
                     factura.firma_fel = numero_autorizacion.text
                     factura.name = numero_autorizacion.get("Serie")+"-"+numero_autorizacion.get("Numero")
                     factura.serie_fel = numero_autorizacion.get("Serie")
                     factura.numero_fel = numero_autorizacion.get("Numero")
                     factura.nombre_cliente_fel = nombre_receptor.get("NombreReceptor")
-                    factura.direccion_cliente_fel = direccion_receptor[0].xpath("//*[local-name() = 'Direccion']")[0].text if len(direccion_receptor) > 0 else ''
+                    factura.direccion_cliente_fel = direccion_receptor[0].text if len(direccion_receptor) > 0 else ''
                 else:
                     raise UserError("Error en Guatefacturas: "+resultado)
 
