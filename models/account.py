@@ -17,26 +17,17 @@ import html
 class AccountInvoice(models.Model):
     _inherit = "account.invoice"
 
-    firma_fel = fields.Char('Firma FEL', copy=False)
-    serie_fel = fields.Char('Serie FEL', copy=False)
-    numero_fel = fields.Char('Numero FEL', copy=False)
     nombre_cliente_fel = fields.Char('Nombre Cliente FEL', copy=False)
     direccion_cliente_fel = fields.Char('Dirección Cliente FEL', copy=False)
     telefono_cliente_fel = fields.Char('Nombre Cliente FEL', copy=False)
-    factura_original_id = fields.Many2one('account.invoice', string="Factura original FEL")
-    documento_xml_fel = fields.Binary('Documento xml FEL', copy=False)
-    documento_xml_fel_name = fields.Char('Nombre doc xml fel', default='documento_xml_fel.xml', size=32)
-    resultado_xml_fel = fields.Binary('Resultado xml FEL', copy=False)
-    resultado_xml_fel_name = fields.Char('Resultado doc xml fel', default='resultado_xml_fel.xml', size=32)
-
-    motivo_fel = fields.Char('Motivo FEL', copy=False)
 
     def invoice_validate(self):
-        detalles = []
-        subtotal = 0
         for factura in self:
-            if factura.journal_id.usuario_fel and not factura.firma_fel and factura.amount_total != 0:
+            if factura.journal_id.usuario_fel and factura.requiere_certificacion():
 
+                if factura.error_pre_validacion():
+                    return
+                    
                 DocElectronico = etree.Element("DocElectronico")
 
                 Encabezado = etree.SubElement(DocElectronico, "Encabezado")
@@ -226,7 +217,7 @@ class AccountInvoice(models.Model):
                     wsdl = 'https://dte.guatefacturas.com/webservices63/feltest/Guatefac?WSDL'
                 client = zeep.Client(wsdl=wsdl, transport=transport)
 
-                resultado = client.service.generaDocumento(factura.journal_id.usuario_fel, factura.journal_id.clave_fel, factura.journal_id.nit_fel, factura.journal_id.establecimiento_fel, factura.journal_id.tipo_documento_fel, factura.journal_id.id_maquina_fel, "D", xmls)
+                resultado = client.service.generaDocumento(factura.journal_id.usuario_fel, factura.journal_id.clave_fel, factura.journal_id.nit_fel, factura.journal_id.establecimiento_fel if 'establecimiento_fel' in factura.fields_get() else factura.journal_id.codigo_establecimiento_fel, factura.journal_id.tipo_documento_fel, factura.journal_id.id_maquina_fel, "D", xmls)
                 logging.warn(resultado)
 
                 if resultado.find("dte:SAT ClaseDocumento") >= 0:
@@ -249,9 +240,13 @@ class AccountInvoice(models.Model):
                     factura.nombre_cliente_fel = nombre_receptor.get("NombreReceptor")
                     factura.direccion_cliente_fel = direccion_receptor[0].text if len(direccion_receptor) > 0 else ''
                 else:
-                    raise UserError("Error en Guatefacturas: "+resultado)
+                    factura.error_certificador(resultado)
+                    return
 
-        return super(AccountInvoice,self).invoice_validate()
+                return super(AccountInvoice, self).invoice_validate()
+
+            else:
+                return super(AccountInvoice, self).invoice_validate()
 
     @api.multi
     def action_cancel(self):

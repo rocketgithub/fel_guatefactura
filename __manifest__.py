@@ -5,9 +5,9 @@
     'version': '1.0',
     'category': 'Custom',
     'description': """ Integración con factura electrónica de Guatefactura """,
-    'author': 'Rodrigo Fernandez',
+    'author': 'aquíH',
     'website': 'http://aquih.com/',
-    'depends': ['account'],
+    'depends': ['fel_gt'],
     'data': [
         'views/account_view.xml',
         'views/partner_view.xml',

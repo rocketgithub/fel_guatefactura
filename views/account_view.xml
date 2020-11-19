@@ -68,8 +68,6 @@
                         <field name="usuario_fel"/>
                         <field name="clave_fel"/>
                         <field name="nit_fel"/>
-                        <field name="establecimiento_fel"/>
-                        <field name="tipo_documento_fel"/>
                         <field name="id_maquina_fel"/>
                     </field>
                 </data>
@@ -82,15 +80,11 @@
             <field name="inherit_id" ref="base.view_company_form"/>
             <field name="arch" type="xml">
                 <data>
-                    <notebook position="inside">
-                        <page string="FEL Guatefactura">
-                            <group string="Guatefactura">
-                                <group>
-                                    <field name="pruebas_fel"/>
-                                </group>
-                            </group>
-                        </page>
-                    </notebook>
+                    <field name="frases_fel" position="replace">
+                        <field name="pruebas_fel"/>
+                    </field>
+                    <field name="adenda_fel" position="replace">
+                    </field>
                 </data>
             </field>
         </record>
