@@ -81,11 +81,12 @@ class AccountInvoice(models.Model):
                     PorcISR.text = "0.05"
 
                 Referencia = etree.SubElement(InfoDoc, "Referencia")
-                Referencia.text = str(20000+factura.id)
-                Referencia = etree.SubElement(InfoDoc, "NumeroAcceso")
-                Referencia = etree.SubElement(InfoDoc, "SerieAdmin")
-                Referencia = etree.SubElement(InfoDoc, "NumeroAdmin")
-                Referencia = etree.SubElement(InfoDoc, "Reversion")
+                Referencia.text = str(factura.id)
+                NumeroAcceso = etree.SubElement(InfoDoc, "NumeroAcceso")
+                NumeroAcceso.text = str(factura.id+100000000)
+                SerieAdmin = etree.SubElement(InfoDoc, "SerieAdmin")
+                NumeroAdmin = etree.SubElement(InfoDoc, "NumeroAdmin")
+                Reversion = etree.SubElement(InfoDoc, "Reversion")
 
                 total_exento = 0
                 total_neto = 0
