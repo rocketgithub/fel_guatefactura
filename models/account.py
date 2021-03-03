@@ -86,6 +86,25 @@ class AccountInvoice(models.Model):
                 NumeroAcceso.text = str(factura.id+100000000)
                 SerieAdmin = etree.SubElement(InfoDoc, "SerieAdmin")
                 NumeroAdmin = etree.SubElement(InfoDoc, "NumeroAdmin")
+                if factura.tipo_gasto == 'importacion':
+                    INCOTERM = etree.SubElement(InfoDoc, "INCOTERM")
+                    INCOTERM.text = factura.incoterm_fel or "-"
+                    DESTINATARIO = etree.SubElement(InfoDoc, "DESTINATARIO")
+                    DESTINATARIO.text = factura.consignatario_fel.name if factura.consignatario_fel else "-"
+                    CODIGODESTINA = etree.SubElement(InfoDoc, "CODIGODESTINA")
+                    CODIGODESTINA.text = factura.consignatario_fel.ref or "-" if factura.consignatario_fel else "-"
+                    NOMBCOMPRADOR = etree.SubElement(InfoDoc, "NOMBCOMPRADOR")
+                    NOMBCOMPRADOR.text = factura.comprador_fel.name if factura.comprador_fel else "-"
+                    DIRCOMPRADOR = etree.SubElement(InfoDoc, "DIRCOMPRADOR")
+                    DIRCOMPRADOR.text = factura.comprador_fel.street or "-" if factura.comprador_fel else "-"
+                    CODCOMPRADOR = etree.SubElement(InfoDoc, "CODCOMPRADOR")
+                    CODCOMPRADOR.text = factura.comprador_fel.ref or "-" if factura.comprador_fel else "-"
+                    OTRAREF = etree.SubElement(InfoDoc, "OTRAREF")
+                    OTRAREF.text = "-"
+                    CODEXPORT = etree.SubElement(InfoDoc, "CODEXPORT")
+                    CODEXPORT.text = factura.exportador_fel.ref or "-" if factura.exportador_fel else "-"
+                    DIRDEST = etree.SubElement(InfoDoc, "DIRDEST")
+                    DIRDEST.text = factura.consignatario_fel.street or "-" if factura.consignatario_fel else "-"
                 Reversion = etree.SubElement(InfoDoc, "Reversion")
 
                 total_exento = 0
