@@ -51,7 +51,10 @@ class AccountInvoice(models.Model):
 
                     Nombre.text = factura.partner_id.name
                     Direccion = etree.SubElement(Receptor, "Direccion")
-                    Direccion.text = factura.partner_id.street or "."
+                    if factura.tipo_gasto != 'importacion':
+                        Direccion.text = factura.partner_id.street or "."
+                    else:
+                        Direccion.text = "."
 
                 InfoDoc = etree.SubElement(Encabezado, "InfoDoc")
 
@@ -62,9 +65,9 @@ class AccountInvoice(models.Model):
                 Fecha = etree.SubElement(InfoDoc, "Fecha")
                 Fecha.text = fields.Date.from_string(factura.date_invoice).strftime("%d/%m/%Y")
                 Moneda = etree.SubElement(InfoDoc, "Moneda")
-                Moneda.text = "1"
+                Moneda.text = "1" if factura.currency_id.id == factura.company_id.currency_id.id else "2"
                 Tasa = etree.SubElement(InfoDoc, "Tasa")
-                Tasa.text = "1"
+                Tasa.text = "1" if factura.currency_id.id == factura.company_id.currency_id.id else str(factura.company_id.currency_id.rate/factura.currency_id.rate)
 
                 if factura.journal_id.tipo_documento_fel == 5:
                     TipoDocIdentificacion = etree.SubElement(InfoDoc, "TipoDocIdentificacion")
@@ -85,26 +88,9 @@ class AccountInvoice(models.Model):
                 NumeroAcceso = etree.SubElement(InfoDoc, "NumeroAcceso")
                 NumeroAcceso.text = str(factura.id+100000000)
                 SerieAdmin = etree.SubElement(InfoDoc, "SerieAdmin")
+                SerieAdmin.text = ""
                 NumeroAdmin = etree.SubElement(InfoDoc, "NumeroAdmin")
-                if factura.tipo_gasto == 'importacion':
-                    INCOTERM = etree.SubElement(InfoDoc, "INCOTERM")
-                    INCOTERM.text = factura.incoterm_fel or "-"
-                    DESTINATARIO = etree.SubElement(InfoDoc, "DESTINATARIO")
-                    DESTINATARIO.text = factura.consignatario_fel.name if factura.consignatario_fel else "-"
-                    CODIGODESTINA = etree.SubElement(InfoDoc, "CODIGODESTINA")
-                    CODIGODESTINA.text = factura.consignatario_fel.ref or "-" if factura.consignatario_fel else "-"
-                    NOMBCOMPRADOR = etree.SubElement(InfoDoc, "NOMBCOMPRADOR")
-                    NOMBCOMPRADOR.text = factura.comprador_fel.name if factura.comprador_fel else "-"
-                    DIRCOMPRADOR = etree.SubElement(InfoDoc, "DIRCOMPRADOR")
-                    DIRCOMPRADOR.text = factura.comprador_fel.street or "-" if factura.comprador_fel else "-"
-                    CODCOMPRADOR = etree.SubElement(InfoDoc, "CODCOMPRADOR")
-                    CODCOMPRADOR.text = factura.comprador_fel.ref or "-" if factura.comprador_fel else "-"
-                    OTRAREF = etree.SubElement(InfoDoc, "OTRAREF")
-                    OTRAREF.text = "-"
-                    CODEXPORT = etree.SubElement(InfoDoc, "CODEXPORT")
-                    CODEXPORT.text = factura.exportador_fel.ref or "-" if factura.exportador_fel else "-"
-                    DIRDEST = etree.SubElement(InfoDoc, "DIRDEST")
-                    DIRDEST.text = factura.consignatario_fel.street or "-" if factura.consignatario_fel else "-"
+                NumeroAdmin.text = ""
                 Reversion = etree.SubElement(InfoDoc, "Reversion")
 
                 total_exento = 0
@@ -149,6 +135,32 @@ class AccountInvoice(models.Model):
                 Iva.text = "%.2f" % (total_con_impuestos - total_sin_impuestos)
                 Total = etree.SubElement(Totales, "Total")
                 Total.text = "%.2f" % total_con_impuestos
+                
+                if factura.tipo_gasto == 'importacion':
+                    DatosAdicionales = etree.SubElement(Encabezado, "DatosAdicionales")
+                    NumeroAcceso = etree.SubElement(DatosAdicionales, "NumeroAcceso")
+                    SerieAdmin = etree.SubElement(DatosAdicionales, "SerieAdmin")
+                    SerieAdmin.text = ""
+                    NumeroAdmin = etree.SubElement(DatosAdicionales, "NumeroAdmin")
+                    NumeroAdmin.text = ""
+                    INCOTERM = etree.SubElement(DatosAdicionales, "INCOTERM")
+                    INCOTERM.text = factura.incoterm_fel or "-"
+                    DESTINATARIO = etree.SubElement(DatosAdicionales, "DESTINATARIO")
+                    DESTINATARIO.text = factura.consignatario_fel.name if factura.consignatario_fel else "-"
+                    CODIGODESTINA = etree.SubElement(DatosAdicionales, "CODIGODESTINA")
+                    CODIGODESTINA.text = factura.consignatario_fel.ref or "-" if factura.consignatario_fel else "-"
+                    NOMBCOMPRADOR = etree.SubElement(DatosAdicionales, "NOMBCOMPRADOR")
+                    NOMBCOMPRADOR.text = factura.comprador_fel.name if factura.comprador_fel else "-"
+                    DIRCOMPRADOR = etree.SubElement(DatosAdicionales, "DIRCOMPRADOR")
+                    DIRCOMPRADOR.text = factura.comprador_fel.street or "-" if factura.comprador_fel else "-"
+                    CODCOMPRADOR = etree.SubElement(DatosAdicionales, "CODCOMPRADOR")
+                    CODCOMPRADOR.text = factura.comprador_fel.ref or "-" if factura.comprador_fel else "-"
+                    OTRAREF = etree.SubElement(DatosAdicionales, "OTRAREF")
+                    OTRAREF.text = "-"
+                    CODEXPORT = etree.SubElement(DatosAdicionales, "CODEXPORT")
+                    CODEXPORT.text = factura.exportador_fel.ref or "-" if factura.exportador_fel else "-"
+                    DIRDEST = etree.SubElement(DatosAdicionales, "DIRDEST")
+                    DIRDEST.text = factura.consignatario_fel.street or "-" if factura.consignatario_fel else "-"
 
                 subtotal = 0
                 total = 0
