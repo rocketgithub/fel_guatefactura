@@ -19,7 +19,8 @@ class AccountInvoice(models.Model):
 
     nombre_cliente_fel = fields.Char('Nombre Cliente FEL', copy=False)
     direccion_cliente_fel = fields.Char('Dirección Cliente FEL', copy=False)
-    telefono_cliente_fel = fields.Char('Nombre Cliente FEL', copy=False)
+    telefono_cliente_fel = fields.Char('Telefono Cliente FEL', copy=False)
+    destino_venta_fel = fields.Char('Destino Venta FEL', copy=False)
 
     def invoice_validate(self):
         for factura in self:
@@ -29,9 +30,7 @@ class AccountInvoice(models.Model):
                     return
                     
                 DocElectronico = etree.Element("DocElectronico")
-
                 Encabezado = etree.SubElement(DocElectronico, "Encabezado")
-
                 Receptor = etree.SubElement(Encabezado, "Receptor")
 
                 NITReceptor = etree.SubElement(Receptor, "NITReceptor")
@@ -51,17 +50,14 @@ class AccountInvoice(models.Model):
 
                     Nombre.text = factura.partner_id.name
                     Direccion = etree.SubElement(Receptor, "Direccion")
-                    if factura.tipo_gasto != 'importacion':
-                        Direccion.text = factura.partner_id.street or "."
-                    else:
-                        Direccion.text = "."
+                    Direccion.text = factura.partner_id.street or "."
 
                 InfoDoc = etree.SubElement(Encabezado, "InfoDoc")
 
                 TipoVenta = etree.SubElement(InfoDoc, "TipoVenta")
                 TipoVenta.text = "B" if factura.tipo_gasto == "compra" else "S"
                 DestinoVenta = etree.SubElement(InfoDoc, "DestinoVenta")
-                DestinoVenta.text = "1"
+                DestinoVenta.text = factura.destino_venta_fel if factura.destino_venta_fel else "1"
                 Fecha = etree.SubElement(InfoDoc, "Fecha")
                 Fecha.text = fields.Date.from_string(factura.date_invoice).strftime("%d/%m/%Y")
                 Moneda = etree.SubElement(InfoDoc, "Moneda")
@@ -138,11 +134,6 @@ class AccountInvoice(models.Model):
                 
                 if factura.tipo_gasto == 'importacion':
                     DatosAdicionales = etree.SubElement(Encabezado, "DatosAdicionales")
-                    NumeroAcceso = etree.SubElement(DatosAdicionales, "NumeroAcceso")
-                    SerieAdmin = etree.SubElement(DatosAdicionales, "SerieAdmin")
-                    SerieAdmin.text = ""
-                    NumeroAdmin = etree.SubElement(DatosAdicionales, "NumeroAdmin")
-                    NumeroAdmin.text = ""
                     INCOTERM = etree.SubElement(DatosAdicionales, "INCOTERM")
                     INCOTERM.text = factura.incoterm_fel or "-"
                     DESTINATARIO = etree.SubElement(DatosAdicionales, "DESTINATARIO")
