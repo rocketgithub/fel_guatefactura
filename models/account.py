@@ -15,16 +15,25 @@ from zeep.transports import Transport
 import html
 
 class AccountInvoice(models.Model):
-    _inherit = "account.invoice"
+    _inherit = "account.move"
 
     nombre_cliente_fel = fields.Char('Nombre Cliente FEL', copy=False)
     direccion_cliente_fel = fields.Char('Dirección Cliente FEL', copy=False)
     telefono_cliente_fel = fields.Char('Telefono Cliente FEL', copy=False)
     destino_venta_fel = fields.Char('Destino Venta FEL', copy=False)
+    
+    def _post(self, soft=True):
+        if self.certificar():
+            return super(AccountMove, self)._post(soft)
 
-    def invoice_validate(self):
+    def post(self):
+        if self.certificar():
+            return super(AccountMove, self).post()
+
+    def certificar(self):
         for factura in self:
-            if factura.journal_id.usuario_fel and factura.requiere_certificacion():
+            if factura.requiere_certificacion():
+                self.ensure_one()
 
                 if factura.error_pre_validacion():
                     return
@@ -37,18 +46,16 @@ class AccountInvoice(models.Model):
                 if factura.journal_id.tipo_documento_fel == 5:
                     NITReceptor.tag = "NITVendedor"
 
-                if factura.partner_id.parent_id and factura.partner_id.nit_especifico:
-                    nit = factura.partner_id.nit_especifico
-                else:
-                    nit = factura.partner_id.vat
-
+                nit = factura.partner_id.vat
                 NITReceptor.text = nit.replace('-','')
-                if nit == "C/F" or nit == "CF":
+                if nit == "CF":
                     Nombre = etree.SubElement(Receptor, "Nombre")
                     if factura.journal_id.tipo_documento_fel == 5:
                         Nombre.tag = "NombreVendedor"
 
                     Nombre.text = factura.partner_id.name
+                    if factura.partner_id.nombre_facturacion_fel:
+                        Nombre.text = factura.partner_id.nombre_facturacion_fel
                     Direccion = etree.SubElement(Receptor, "Direccion")
                     Direccion.text = factura.partner_id.street or "."
 
@@ -59,7 +66,7 @@ class AccountInvoice(models.Model):
                 DestinoVenta = etree.SubElement(InfoDoc, "DestinoVenta")
                 DestinoVenta.text = factura.destino_venta_fel if factura.destino_venta_fel else "1"
                 Fecha = etree.SubElement(InfoDoc, "Fecha")
-                Fecha.text = fields.Date.from_string(factura.date_invoice).strftime("%d/%m/%Y")
+                Fecha.text = factura.invoice_date.strftime("%d/%m/%Y") if factura.invoice_date else fields.Date.context_today(self).strftime("%d/%m/%Y")
                 Moneda = etree.SubElement(InfoDoc, "Moneda")
                 Moneda.text = "1" if factura.currency_id.id == factura.company_id.currency_id.id else "2"
                 Tasa = etree.SubElement(InfoDoc, "Tasa")
@@ -69,7 +76,7 @@ class AccountInvoice(models.Model):
                     TipoDocIdentificacion = etree.SubElement(InfoDoc, "TipoDocIdentificacion")
                     TipoDocIdentificacion.text = "2"
                     NumeroIdentificacion = etree.SubElement(InfoDoc, "NumeroIdentificacion")
-                    NumeroIdentificacion.text = factura.partner_id.numero_identificacion_fel
+                    NumeroIdentificacion.text = factura.partner_id.cui
                     PaisEmision = etree.SubElement(InfoDoc, "PaisEmision")
                     PaisEmision.text = factura.partner_id.pais_emision_fel
                     DepartamentoEmision = etree.SubElement(InfoDoc, "DepartamentoEmision")
@@ -207,10 +214,7 @@ class AccountInvoice(models.Model):
                         ImpTotal.text = "%.2f" % total_linea
                         DatosAdicionalesProd = etree.SubElement(Productos, "DatosAdicionalesProd")
                         TipoVentaDet = etree.SubElement(Productos, "TipoVentaDet")
-                        if linea.product_id.tipo_bien_fel:
-                            TipoVentaDet.text = "B" if linea.product_id.tipo_bien_fel == "bien" else "S"
-                        else:
-                            TipoVentaDet.text = "B" if linea.product_id.type == "product" else "S"
+                        TipoVentaDet.text = "S" if linea.product_id.type == "service" else "B"
 
                         total += total_linea
                         subtotal += total_linea_base
@@ -240,7 +244,7 @@ class AccountInvoice(models.Model):
                     wsdl = 'https://dte.guatefacturas.com/webservices63/feltest/Guatefac?WSDL'
                 client = zeep.Client(wsdl=wsdl, transport=transport)
 
-                resultado = client.service.generaDocumento(factura.journal_id.usuario_fel, factura.journal_id.clave_fel, factura.journal_id.nit_fel, factura.journal_id.establecimiento_fel if 'establecimiento_fel' in factura.fields_get() else factura.journal_id.codigo_establecimiento_fel, factura.journal_id.tipo_documento_fel, factura.journal_id.id_maquina_fel, "D", xmls)
+                resultado = client.service.generaDocumento(factura.company_id.usuario_fel, factura.company_id.clave_fel, factura.company_id.nit_fel, factura.journal_id.codigo_establecimiento, factura.journal_id.tipo_documento_fel, factura.journal_id.id_maquina_fel, "D", xmls)
                 logging.warn(resultado)
 
                 if resultado.find("dte:SAT ClaseDocumento") >= 0:
@@ -265,59 +269,43 @@ class AccountInvoice(models.Model):
                 else:
                     factura.error_certificador(resultado)
                     return
+                    
+        return True
 
-                return super(AccountInvoice, self).invoice_validate()
-
-            else:
-                return super(AccountInvoice, self).invoice_validate()
-
-    @api.multi
     def action_cancel(self):
-        result = super(AccountInvoice,self).action_cancel()
-        if result:
-            for factura in self:
-                if factura.journal_id.usuario_fel and factura.firma_fel:
-                    session = Session()
-                    session.verify = False
-                    session.auth = HTTPBasicAuth('usr_guatefac', 'usrguatefac')
-                    session.http_auth = HTTPBasicAuth('usr_guatefac', 'usrguatefac')
-                    session.headers.update({'Authorization': 'Basic dXNyX2d1YXRlZmFjOnVzcmd1YXRlZmFj'})
-                    transport = Transport(session=session)
-                    wsdl = 'https://dte.guatefacturas.com/webservices63/fel/Guatefac?WSDL'
-                    if factura.company_id.pruebas_fel:
-                        wsdl = 'https://dte.guatefacturas.com/webservices63/feltest/Guatefac?WSDL'
-                    client = zeep.Client(wsdl=wsdl, transport=transport)
-
-                    resultado = client.service.anulaDocumento(factura.journal_id.usuario_fel, factura.journal_id.clave_fel, factura.journal_id.nit_fel, factura.serie_fel, factura.numero_fel, factura.partner_id.vat, datetime.date.today().strftime("%Y%m%d"), factura.motivo_fel)
-                    resultado = resultado.replace("&", "&amp;")
-                    logging.warn(resultado)
-                    resultadoXML = etree.XML(resultado)
-
-                    if len(resultadoXML.xpath("//ESTADO")) != 0 and resultadoXML.xpath("//ESTADO")[0].text != "ANULADO":
-                        if len(resultadoXML.xpath("//ERROR")) != 0 and resultadoXML.xpath("//ERROR")[0].text != "DOCUMENTO ANULADO PREVIAMENTE":
-                            raise UserError("Error en Guatefacturas: "+etree.tostring(resultadoXML))
-
-        return result
-
-    @api.multi
-    def action_invoice_draft(self):
+        result = super(AccountMove, self).button_cancel()
         for factura in self:
-            if factura.firma_fel:
-                raise UserError("La factura ya fue enviada a Guatefacturas, por lo que ya no puede ser modificada")
-            else:
-                return super(AccountInvoice,self).action_invoice_draft()
+            if factura.requiere_certificacion() and factura.firma_fel:
+                session = Session()
+                session.verify = False
+                session.auth = HTTPBasicAuth('usr_guatefac', 'usrguatefac')
+                session.http_auth = HTTPBasicAuth('usr_guatefac', 'usrguatefac')
+                session.headers.update({'Authorization': 'Basic dXNyX2d1YXRlZmFjOnVzcmd1YXRlZmFj'})
+                transport = Transport(session=session)
+                wsdl = 'https://dte.guatefacturas.com/webservices63/fel/Guatefac?WSDL'
+                if factura.company_id.pruebas_fel:
+                    wsdl = 'https://dte.guatefacturas.com/webservices63/feltest/Guatefac?WSDL'
+                client = zeep.Client(wsdl=wsdl, transport=transport)
+
+                resultado = client.service.anulaDocumento(factura.company_id.usuario_fel, factura.company_id.clave_fel, factura.company_id.nit_fel, factura.serie_fel, factura.numero_fel, factura.partner_id.vat, datetime.date.today().strftime("%Y%m%d"), factura.motivo_fel)
+                resultado = resultado.replace("&", "&amp;")
+                logging.warn(resultado)
+                resultadoXML = etree.XML(resultado)
+
+                if len(resultadoXML.xpath("//ESTADO")) != 0 and resultadoXML.xpath("//ESTADO")[0].text != "ANULADO":
+                    if len(resultadoXML.xpath("//ERROR")) != 0 and resultadoXML.xpath("//ERROR")[0].text != "DOCUMENTO ANULADO PREVIAMENTE":
+                        raise UserError("Error en Guatefacturas: "+etree.tostring(resultadoXML))
 
 class AccountJournal(models.Model):
     _inherit = "account.journal"
 
-    usuario_fel = fields.Char('Usuario FEL', copy=False)
-    clave_fel = fields.Char('Clave FEL', copy=False)
-    nit_fel = fields.Char('NIT FEL', copy=False)
-    establecimiento_fel = fields.Char('Establecimiento FEL', copy=False)
     tipo_documento_fel = fields.Integer('Tipo de Documento FEL', copy=False)
     id_maquina_fel = fields.Integer('ID Maquina FEL', copy=False)
 
 class ResCompany(models.Model):
     _inherit = "res.company"
 
+    usuario_fel = fields.Char('Usuario FEL', copy=False)
+    clave_fel = fields.Char('Clave FEL', copy=False)
+    nit_fel = fields.Char('NIT FEL', copy=False)
     pruebas_fel = fields.Boolean('Modo de Pruebas FEL')

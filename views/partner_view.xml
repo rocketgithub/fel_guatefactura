@@ -9,8 +9,6 @@
             <field name="arch" type="xml">
                 <data>
                     <field name="ref" position="after">
-                        <field name="nit_especifico"/>
-                        <field name="numero_identificacion_fel"/>
                         <field name="pais_emision_fel"/>
                         <field name="departamento_emision_fel"/>
                         <field name="municipio_emision_fel"/>

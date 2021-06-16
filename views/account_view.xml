@@ -3,8 +3,8 @@
     <data>
 
         <record model="ir.ui.view" id="invoice_form_fel_guatefactura">
-            <field name="name">account.invoice.form.fel_guatefactura</field>
-            <field name="model">account.invoice</field>
+            <field name="name">fel_guatefactura.account.move.form</field>
+            <field name="model">account.move</field>
             <field name="inherit_id" ref="fel_gt.invoice_form_fel_gt"/>
             <field name="arch" type="xml">
                 <data>
@@ -20,30 +20,13 @@
             </field>
         </record>
         
-        <record model="ir.ui.view" id="invoice_supplier_form_fel_guatefactura">
-            <field name="name">account.invoice.supplier.form.fel_guatefactura</field>
-            <field name="model">account.invoice</field>
-            <field name="inherit_id" ref="fel_gt.invoice_supplier_form_fel_gt"/>
-            <field name="arch" type="xml">
-                <data>
-                    <field name="resultado_xml_fel" position="after">
-                        <field name="nombre_cliente_fel"/>
-                        <field name="direccion_cliente_fel"/>
-                    </field>
-                </data>
-            </field>
-        </record>
-
         <record model="ir.ui.view" id="journal_form_fel_guatefactura">
-            <field name="name">account.journal.form.fel_guatefactura</field>
+            <field name="name">fel_guatefactura.account.journal.form</field>
             <field name="model">account.journal</field>
             <field name="inherit_id" ref="fel_gt.journal_form_fel_gt"/>
             <field name="arch" type="xml">
                 <data>
                     <field name="tipo_documento_fel" position="after">
-                        <field name="usuario_fel"/>
-                        <field name="clave_fel"/>
-                        <field name="nit_fel"/>
                         <field name="id_maquina_fel"/>
                     </field>
                 </data>
@@ -51,12 +34,15 @@
         </record>
         
         <record id="view_company_form_fel_guatefactura" model="ir.ui.view">
-            <field name="name">res.company.form.fel_guatefactura</field>
+            <field name="name">fel_guatefactura.res.company.form</field>
             <field name="model">res.company</field>
             <field name="inherit_id" ref="fel_gt.view_company_form_fel_gt"/>
             <field name="arch" type="xml">
                 <data>
                     <field name="frases_fel" position="replace">
+                        <field name="usuario_fel"/>
+                        <field name="clave_fel"/>
+                        <field name="nit_fel"/>
                         <field name="pruebas_fel"/>
                     </field>
                     <field name="adenda_fel" position="replace">
