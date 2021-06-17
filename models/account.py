@@ -14,7 +14,7 @@ import zeep
 from zeep.transports import Transport
 import html
 
-class AccountInvoice(models.Model):
+class AccountMove(models.Model):
     _inherit = "account.move"
 
     nombre_cliente_fel = fields.Char('Nombre Cliente FEL', copy=False)
@@ -229,7 +229,7 @@ class AccountInvoice(models.Model):
 
                 xmls = etree.tostring(DocElectronico, encoding="UTF-8")
                 logging.warn(xmls)
-                datos = base64.b64encode(b" "+xmls)
+                datos = base64.b64encode(xmls)
                 factura.documento_xml_fel = datos
                 factura.documento_xml_fel_name = "documento_xml_fel.xml"
 
@@ -248,10 +248,9 @@ class AccountInvoice(models.Model):
                 logging.warn(resultado)
 
                 if resultado.find("dte:SAT ClaseDocumento") >= 0:
-                    resultado = resultado.replace("&", "&amp;")
                     resultado = resultado.replace("<Resultado>", "")
                     resultado = resultado.replace("</Resultado>", "")
-                    datos = base64.b64encode(b" "+(resultado.encode("utf-8")))
+                    datos = base64.b64encode(bytes(resultado, encoding='utf-8'))
                     factura.resultado_xml_fel = datos
                     factura.resultado_xml_fel_name = "resultado_xml_fel.xml"
 
