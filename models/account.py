@@ -264,6 +264,7 @@ class AccountMove(models.Model):
                     factura.numero_fel = numero_autorizacion.get("Numero")
                     factura.nombre_cliente_fel = nombre_receptor.get("NombreReceptor")
                     factura.direccion_cliente_fel = direccion_receptor[0].text if len(direccion_receptor) > 0 else ''
+                    factura.certificador_fel = "guatefactura"
                 else:
                     factura.error_certificador(resultado)
                     return
