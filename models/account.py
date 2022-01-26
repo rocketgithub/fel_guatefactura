@@ -239,7 +239,7 @@ class AccountMove(models.Model):
                 session.http_auth = HTTPBasicAuth('usr_guatefac', 'usrguatefac')
                 session.headers.update({'Authorization': 'Basic dXNyX2d1YXRlZmFjOnVzcmd1YXRlZmFj'})
                 transport = Transport(session=session)
-                wsdl = 'https://dte.guatefacturas.com/webservices63/fel/Guatefac?WSDL'
+                wsdl = 'https://dte.guatefacturas.com/webservices63/felprima/Guatefac?WSDL'
                 if factura.company_id.pruebas_fel:
                     wsdl = 'https://dte.guatefacturas.com/webservices63/feltest/Guatefac?WSDL'
                 client = zeep.Client(wsdl=wsdl, transport=transport)
@@ -281,7 +281,7 @@ class AccountMove(models.Model):
                 session.http_auth = HTTPBasicAuth('usr_guatefac', 'usrguatefac')
                 session.headers.update({'Authorization': 'Basic dXNyX2d1YXRlZmFjOnVzcmd1YXRlZmFj'})
                 transport = Transport(session=session)
-                wsdl = 'https://dte.guatefacturas.com/webservices63/fel/Guatefac?WSDL'
+                wsdl = 'https://dte.guatefacturas.com/webservices63/felprima/Guatefac?WSDL'
                 if factura.company_id.pruebas_fel:
                     wsdl = 'https://dte.guatefacturas.com/webservices63/feltest/Guatefac?WSDL'
                 client = zeep.Client(wsdl=wsdl, transport=transport)
