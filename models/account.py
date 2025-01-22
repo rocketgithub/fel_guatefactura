@@ -234,14 +234,11 @@ class AccountMove(models.Model):
                 factura.documento_xml_fel_name = "documento_xml_fel.xml"
 
                 session = Session()
-                session.verify = False
                 session.auth = HTTPBasicAuth('usr_guatefac', 'usrguatefac')
-                session.http_auth = HTTPBasicAuth('usr_guatefac', 'usrguatefac')
-                session.headers.update({'Authorization': 'Basic dXNyX2d1YXRlZmFjOnVzcmd1YXRlZmFj'})
                 transport = Transport(session=session)
-                wsdl = 'https://dte.guatefacturas.com/webservices63/felprima/Guatefac?WSDL'
+                wsdl = 'https://pdte.guatefacturas.com/webservices63/felprima/Guatefac?WSDL'
                 if factura.company_id.pruebas_fel:
-                    wsdl = 'https://dte.guatefacturas.com/webservices63/feltest/Guatefac?WSDL'
+                    wsdl = 'https://pdte.guatefacturas.com/webservices63/feltest/Guatefac?WSDL'
                 client = zeep.Client(wsdl=wsdl, transport=transport)
 
                 resultado = client.service.generaDocumento(factura.company_id.usuario_fel, factura.company_id.clave_fel, factura.company_id.nit_fel, factura.journal_id.codigo_establecimiento, factura.journal_id.tipo_documento_fel, factura.journal_id.id_maquina_fel, "D", xmls)
@@ -276,14 +273,11 @@ class AccountMove(models.Model):
         for factura in self:
             if factura.requiere_certificacion() and factura.firma_fel:
                 session = Session()
-                session.verify = False
                 session.auth = HTTPBasicAuth('usr_guatefac', 'usrguatefac')
-                session.http_auth = HTTPBasicAuth('usr_guatefac', 'usrguatefac')
-                session.headers.update({'Authorization': 'Basic dXNyX2d1YXRlZmFjOnVzcmd1YXRlZmFj'})
                 transport = Transport(session=session)
-                wsdl = 'https://dte.guatefacturas.com/webservices63/felprima/Guatefac?WSDL'
+                wsdl = 'https://pdte.guatefacturas.com/webservices63/felprima/Guatefac?WSDL'
                 if factura.company_id.pruebas_fel:
-                    wsdl = 'https://dte.guatefacturas.com/webservices63/feltest/Guatefac?WSDL'
+                    wsdl = 'https://pdte.guatefacturas.com/webservices63/feltest/Guatefac?WSDL'
                 client = zeep.Client(wsdl=wsdl, transport=transport)
 
                 resultado = client.service.anulaDocumento(factura.company_id.usuario_fel, factura.company_id.clave_fel, factura.company_id.nit_fel, factura.serie_fel, factura.numero_fel, factura.partner_id.vat, datetime.date.today().strftime("%Y%m%d"), factura.motivo_fel)
